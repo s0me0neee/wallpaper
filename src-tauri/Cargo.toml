@@ -39,6 +39,7 @@ thiserror = "2.0.18"
 toml = "0.8"
 wp = { package = "wallpaper", version = "3" }
 duct = "1.1.1"
+notify-rust = "4"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "0.26"
