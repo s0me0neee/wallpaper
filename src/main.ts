@@ -1,5 +1,6 @@
+import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { initColumns, applyColumns, cols } from "./zoom";
+import { initColumns } from "./zoom";
 import { loadImages, currentDir, currentSort } from "./loader";
 import { initKeyboard } from "./keyboard";
 
@@ -11,7 +12,7 @@ async function pickDirectory(): Promise<void> {
   }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
   initColumns();
   initKeyboard();
 
@@ -21,5 +22,6 @@ window.addEventListener("DOMContentLoaded", () => {
     loadImages(currentDir, (e.target as HTMLSelectElement).value);
   });
 
-  loadImages();
+  const startDir = await invoke<string | null>("get_startup_dir");
+  loadImages(startDir ?? undefined, currentSort);
 });

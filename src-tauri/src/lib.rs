@@ -1,11 +1,14 @@
 mod commands;
 mod scanner;
 mod test;
-mod thumbnail;
+pub mod thumbnail;
 mod types;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    test::bench_if_requested();
+    std::thread::spawn(thumbnail::cleanup);
+
     tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::new()
@@ -34,7 +37,10 @@ pub fn run() {
         )
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![commands::start_load_images])
+        .invoke_handler(tauri::generate_handler![
+            commands::start_load_images,
+            commands::get_startup_dir,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

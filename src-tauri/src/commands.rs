@@ -1,5 +1,6 @@
 use crate::{
     scanner,
+    test,
     thumbnail,
     types::{ImageEntry, LoadDone, SortBy},
 };
@@ -75,4 +76,9 @@ pub fn start_load_images(
     });
 
     Ok(())
+}
+
+#[tauri::command]
+pub fn get_startup_dir() -> Option<String> {
+    test::startup_dir().map(|p| p.to_string_lossy().into_owned())
 }
