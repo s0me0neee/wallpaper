@@ -1,4 +1,4 @@
-name: Release
+name: publish
 
 on:
   push:
@@ -14,58 +14,54 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
-            args: --target universal-apple-darwin
+            args: --target aarch64-apple-darwin
+          - platform: macos-latest
+            args: --target x86_64-apple-darwin
           - platform: ubuntu-22.04
             args: ''
           - platform: windows-latest
             args: ''
-    runs-on: ${{ matrix.platform }}
 
+    runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: latest
-
-      - name: Setup Node
+      - name: setup node
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: pnpm
 
-      - name: Install Rust stable
+      - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-      - name: Install Linux dependencies
+      - name: install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libappindicator3-dev \
-            librsvg2-dev \
-            patchelf
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - name: Install frontend dependencies
+      - name: install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: install frontend dependencies
         run: pnpm install
 
-      - name: Build and publish
-        uses: tauri-apps/tauri-action@v0
+      - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
+          tagName: v__VERSION__
           releaseName: wall v__VERSION__
           releaseBody: |
             ## Install
 
             Download the package for your platform from the assets below.
 
-            - **macOS** — `.dmg` (universal: Intel + Apple Silicon)
+            - **macOS** — `.dmg` (arm64 or x86_64)
             - **Linux** — `.deb` / `.AppImage` / `.rpm`
             - **Windows** — `.msi` / `.exe` (NSIS)
           releaseDraft: true
