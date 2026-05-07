@@ -10,21 +10,26 @@ A lightweight floating wallpaper picker built with [Tauri v2](https://tauri.app)
 - Ctrl +/- to zoom the grid (2–8 columns)
 - hjkl / arrow key navigation
 - Config auto-saved — remembers last directory, sort order, and column count
-- Post-command hooks — run shell commands (or send a notification) after every wallpaper change
+- Post-command hooks — run shell commands (or send a native notification) after every wallpaper change
 - CLI mode — set a wallpaper from the terminal without opening the GUI
 - Esc or ✕ to close
+
+## Install
+
+Download the latest release for your platform from the [Releases](../../releases) page:
+
+- **macOS** — `.dmg` (arm64 or x86_64)
+- **Linux** — `.deb` / `.AppImage`
+- **Windows** — `.msi` / `.exe`
 
 ## CLI
 
 ```bash
-wall /path/to/image.jpg        # set wallpaper, no GUI
-wall -v  /path/to/image.jpg    # debug logging
-wall -vv /path/to/image.jpg    # trace logging
-wall -q  /path/to/image.jpg    # silent (errors only)
-wall                           # open the GUI picker
+wall /path/to/image.jpg     # set wallpaper, no GUI
+wall -v /path/to/image.jpg  # verbose (debug) logging
+wall -q /path/to/image.jpg  # quiet (errors only)
+wall                        # open the GUI picker
 ```
-
-Flags can be combined with short clusters: `wall -vq` is valid (quiet wins).
 
 ## Requirements
 
@@ -38,7 +43,8 @@ On Linux, a compositor that supports transparent windows is recommended for roun
 
 ```bash
 pnpm install
-pnpm tauri dev
+pnpm tauri dev        # hot-reload; logs at trace level by default
+pnpm tauri dev 2>&1   # pipe Rust output to terminal
 ```
 
 Useful dev flags:
@@ -54,7 +60,7 @@ BENCH=1 pnpm tauri dev   # run thumbnail benchmarks and exit
 pnpm tauri build
 ```
 
-The release binary is placed in `src-tauri/target/release/` as `wall`.
+The release binary is placed in `src-tauri/target/release/` as `wall`. Releases for all platforms are built automatically via GitHub Actions on every `v*` tag.
 
 ## Benchmarks
 
@@ -90,15 +96,15 @@ subdir = false
 [post_command]
 cmds = [
   "notify-send 'Wallpaper changed' '${{wallpaper}}'",
-  "${{notify 'Wallpaper changed'}}",   # native notification via Tauri
+  "${{notify 'Wallpaper changed'}}",
 ]
 ```
 
-`${{wallpaper}}` in any command is replaced with the absolute path of the newly set image. `${{notify 'message'}}` sends a native OS notification without spawning a shell.
+`${{wallpaper}}` is replaced with the absolute path of the newly set image. `${{notify 'message'}}` sends a native OS notification without spawning a shell.
 
 ## Thumbnail Cache
 
-Thumbnails are cached in `~/.cache/wallpaper/thumbnails/`. The cache is self-managing — stale entries (modified source file, entries older than 30 days, or total size over 200 MB) are cleaned up automatically on startup.
+Thumbnails are cached in `~/.cache/wallpaper/thumbnails/`. The cache is self-managing — stale entries (modified source file, entries older than 30 days, or total size over 200 MB) are evicted automatically on startup.
 
 ## Tech Stack
 
