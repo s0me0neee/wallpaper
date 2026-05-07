@@ -21,7 +21,8 @@
 				"alwaysOnTop": true,
 				"resizable": true,
 				"center": true,
-				"visible": false
+				"visible": false,
+				"backgroundColor": [0, 0, 0, 0]
 			}
 		],
 		"security": {
