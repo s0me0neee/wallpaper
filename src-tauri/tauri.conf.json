@@ -41,8 +41,7 @@
 				{
 					"name": "verbose",
 					"short": "v",
-					"description": "Increase log verbosity (-v debug, -vv trace)",
-					"multipleOccurrences": true
+					"description": "Increase log verbosity (-v debug, -vv trace)"
 				},
 				{
 					"name": "quiet",
