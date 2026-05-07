@@ -14,25 +14,8 @@ use std::{
         Mutex,
     },
 };
-use std::sync::OnceLock;
 use tauri::{Emitter, State};
 use tauri_plugin_notification::NotificationExt;
-
-static THUMB_POOL: OnceLock<rayon::ThreadPool> = OnceLock::new();
-
-fn thumb_pool() -> &'static rayon::ThreadPool {
-    THUMB_POOL.get_or_init(|| {
-        let n = std::thread::available_parallelism()
-            .map(|n| n.get().clamp(2, 8))
-            .unwrap_or(4);
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(n)
-            .thread_name(|i| format!("thumb-{i}"))
-            .stack_size(2 * 1024 * 1024) // 2 MB; default 8 MB is excessive for decode+resize
-            .build()
-            .expect("failed to build thumb pool")
-    })
-}
 
 #[tauri::command]
 pub fn start_load_images(
@@ -52,11 +35,20 @@ pub fn start_load_images(
     let total = entries.len();
     log::info!("Found {} image(s)", total);
 
+    let threads = std::thread::available_parallelism()
+        .map(|n| n.get().clamp(2, 8))
+        .unwrap_or(4);
+
     std::thread::spawn(move || {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .build()
+            .expect("failed to build thread pool");
+
         let loaded = AtomicUsize::new(0);
         let skipped = AtomicUsize::new(0);
 
-        thumb_pool().install(|| {
+        pool.install(|| {
             entries.par_iter().enumerate().for_each(|(index, entry)| {
                 let name = entry.path
                     .file_name()
