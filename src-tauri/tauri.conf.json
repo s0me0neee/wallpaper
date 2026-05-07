@@ -14,8 +14,8 @@
 		"windows": [
 			{
 				"title": "wallpaper",
-				"width": 720,
-				"height": 520,
+				"width": 920,
+				"height": 650,
 				"decorations": false,
 				"transparent": true,
 				"alwaysOnTop": true,

@@ -48,7 +48,9 @@ function initSettings(): void {
     const h = Math.max(300, Math.min(1600, Number(hInput.value)));
     appConfig.window_width  = w;
     appConfig.window_height = h;
-    await getCurrentWindow().setSize(new LogicalSize(w, h));
+    const win = getCurrentWindow();
+    await win.setSize(new LogicalSize(w, h));
+    await win.center();
     saveConfig();
   }
 
