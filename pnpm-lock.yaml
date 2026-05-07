@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@cloudworxx/tauri-plugin-mac-rounded-corners':
+        specifier: ^1.1.1
+        version: 1.1.1(@tauri-apps/api@2.11.0)
       '@tauri-apps/api':
         specifier: ^2
         version: 2.11.0
@@ -29,6 +32,13 @@ importers:
         version: 6.4.2
 
 packages:
+
+  '@cloudworxx/tauri-plugin-mac-rounded-corners@1.1.1':
+    resolution: {integrity: sha512-oF75CsaetpvqzMlbULMqGjpg4Y3GqdIIqU4+gbjtPEuLb2AYWGGprjL3UQfIm6Ew75pDFFgVxnL7rJBr5uttgg==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+    peerDependencies:
+      '@tauri-apps/api': ^2
 
   '@esbuild/aix-ppc64@0.25.12':
     resolution: {integrity: sha512-Hhmwd6CInZ3dwpuGTF8fJG6yoWmsToE+vYgD4nytZVxcu1ulHpUQRAB1UJ8+N1Am3Mz4+xOByoQoSZf4D+CpkA==}
@@ -506,6 +516,10 @@ packages:
         optional: true
 
 snapshots:
+
+  '@cloudworxx/tauri-plugin-mac-rounded-corners@1.1.1(@tauri-apps/api@2.11.0)':
+    dependencies:
+      '@tauri-apps/api': 2.11.0
 
   '@esbuild/aix-ppc64@0.25.12':
     optional: true

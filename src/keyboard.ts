@@ -1,6 +1,6 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { applyColumns, cols } from "./zoom";
-import { getItems, getSelectedIndex, setSelected } from "./grid";
+import { getItems, getSelectedIndex, setSelected, triggerActivate } from "./grid";
 
 const isMac = navigator.platform.startsWith("Mac");
 
@@ -25,6 +25,7 @@ export function initKeyboard(): void {
     let next = cur;
 
     switch (e.key) {
+      case "Enter": e.preventDefault(); triggerActivate(); return;
       case "h": case "ArrowLeft":  next = cur - 1;    break;
       case "l": case "ArrowRight": next = cur + 1;    break;
       case "k": case "ArrowUp":    next = cur - cols; break;

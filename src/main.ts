@@ -1,9 +1,11 @@
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
+import { enableModernWindowStyle } from "@cloudworxx/tauri-plugin-mac-rounded-corners";
 import { open } from "@tauri-apps/plugin-dialog";
 import { initColumns, applyColumns, onColsChange } from "./zoom";
 import { loadImages, currentDir, currentSort } from "./loader";
 import { initKeyboard } from "./keyboard";
+import { onActivate } from "./grid";
 import type { AppConfig } from "./types";
 
 let appConfig: AppConfig = {
@@ -59,6 +61,13 @@ function initSettings(): void {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
+  if (navigator.userAgent.includes("Mac")) {
+    document.documentElement.classList.add("macos");
+  }
+  enableModernWindowStyle({ cornerRadius: 12, offsetX: -12 }).catch(() => {});
+
+  onActivate((path) => invoke("set_wallpaper", { path }).catch(console.error));
+
   initColumns();
   initKeyboard();
   initSettings();

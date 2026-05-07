@@ -11,6 +11,8 @@ export interface ImageEntry {
   index: number;
   path: string;
   thumbnail: string;
+  modified: number;
+  size: number;
 }
 
 export interface LoadDone {

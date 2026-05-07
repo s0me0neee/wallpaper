@@ -37,6 +37,11 @@ image = { version = "0.25", default-features = false, features = [
 base64 = "0.22"
 thiserror = "2.0.18"
 toml = "0.8"
+wp = { package = "wallpaper", version = "3" }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = "0.26"
+objc = "0.2.7"
 
 [dev-dependencies]
 criterion = { version = "0.5", default-features = false, features = [

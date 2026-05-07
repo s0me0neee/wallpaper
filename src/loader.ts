@@ -32,9 +32,9 @@ export async function loadImages(dir?: string, sort = currentSort): Promise<void
         dirLabel.textContent = p.substring(0, p.lastIndexOf("/"));
       }
       first = false;
-      appendThumb(e.payload, true); // auto-select first
+      appendThumb(e.payload, true, currentSort);
     } else {
-      appendThumb(e.payload);
+      appendThumb(e.payload, false, currentSort);
     }
   });
 

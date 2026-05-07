@@ -6,10 +6,10 @@ use std::{
 
 const IMAGE_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "webp", "gif", "bmp"];
 
-struct FileMeta {
-    path: PathBuf,
-    modified: u64,
-    size: u64,
+pub struct FileMeta {
+    pub path: PathBuf,
+    pub modified: u64,
+    pub size: u64,
 }
 
 fn is_image(path: &Path) -> bool {
@@ -21,7 +21,7 @@ fn is_image(path: &Path) -> bool {
             .unwrap_or(false)
 }
 
-pub fn scan(dir: &Path, sort_by: SortBy) -> Result<Vec<PathBuf>, String> {
+pub fn scan(dir: &Path, sort_by: SortBy) -> Result<Vec<FileMeta>, String> {
     let mut entries: Vec<FileMeta> = std::fs::read_dir(dir)
         .map_err(|e| {
             log::error!("Failed to read {}: {}", dir.display(), e);
@@ -57,5 +57,5 @@ pub fn scan(dir: &Path, sort_by: SortBy) -> Result<Vec<PathBuf>, String> {
         SortBy::SizeAsc => entries.sort_by_key(|a| a.size),
     }
 
-    Ok(entries.into_iter().map(|e| e.path).collect())
+    Ok(entries)
 }

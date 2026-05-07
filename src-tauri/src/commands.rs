@@ -30,8 +30,8 @@ pub fn start_load_images(
 
     log::info!("Scanning: {}", dir_path.display());
 
-    let paths = scanner::scan(&dir_path, sort_by.unwrap_or_default())?;
-    let total = paths.len();
+    let entries = scanner::scan(&dir_path, sort_by.unwrap_or_default())?;
+    let total = entries.len();
     log::info!("Found {} image(s)", total);
 
     let threads = std::thread::available_parallelism()
@@ -48,21 +48,23 @@ pub fn start_load_images(
         let skipped = AtomicUsize::new(0);
 
         pool.install(|| {
-            paths.par_iter().enumerate().for_each(|(index, path)| {
-                let name = path
+            entries.par_iter().enumerate().for_each(|(index, entry)| {
+                let name = entry.path
                     .file_name()
                     .unwrap_or_default()
                     .to_string_lossy()
                     .into_owned();
 
-                match thumbnail::get(path) {
+                match thumbnail::get(&entry.path) {
                     Some(buf) => {
                         let n = loaded.fetch_add(1, Ordering::Relaxed) + 1;
                         log::debug!("[{n}/{total}] {name}");
                         app.emit("thumbnail", ImageEntry {
                             index,
-                            path: path.to_string_lossy().into_owned(),
+                            path: entry.path.to_string_lossy().into_owned(),
                             thumbnail: format!("data:image/jpeg;base64,{}", STANDARD.encode(&buf)),
+                            modified: entry.modified,
+                            size: entry.size,
                         })
                         .ok();
                     }
@@ -98,4 +100,9 @@ pub fn save_config(setting: config::Setting, state: State<Mutex<config::Setting>
     config::save(&setting).map_err(|e| e.to_string())?;
     *state.lock().unwrap() = setting;
     Ok(())
+}
+
+#[tauri::command]
+pub fn set_wallpaper(path: String) -> Result<(), String> {
+    wp::set_from_path(&path).map_err(|e| e.to_string())
 }

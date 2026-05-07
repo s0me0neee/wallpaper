@@ -5,6 +5,8 @@ pub struct ImageEntry {
     pub index: usize,
     pub path: String,
     pub thumbnail: String,
+    pub modified: u64,
+    pub size: u64,
 }
 
 #[derive(Serialize, Clone)]

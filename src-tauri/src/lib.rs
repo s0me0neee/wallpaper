@@ -1,9 +1,12 @@
 mod commands;
 mod config;
+mod plugins;
 mod scanner;
 mod test;
 pub mod thumbnail;
 mod types;
+
+use plugins::mac_rounded_corners;
 
 use std::sync::Mutex;
 use tauri::Manager;
@@ -52,9 +55,6 @@ pub fn run() {
                     height: cfg.window_height as f64,
                 }));
                 let _ = win.center();
-                // Clear WKWebView's default opaque background — fixes white corners on macOS
-                #[cfg(target_os = "macos")]
-                let _ = win.set_background_color(None);
             }
             Ok(())
         })
@@ -63,6 +63,10 @@ pub fn run() {
             commands::get_startup_dir,
             commands::get_config,
             commands::save_config,
+            commands::set_wallpaper,
+            mac_rounded_corners::enable_rounded_corners,
+            mac_rounded_corners::enable_modern_window_style,
+            mac_rounded_corners::reposition_traffic_lights,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
