@@ -57,3 +57,9 @@ harness = false
 
 [profile.dev]
 opt-level = 2 # compile faster than release but run much faster than debug
+
+[profile.release]
+lto = "thin"
+strip = true
+codegen-units = 1
+panic = "abort"

@@ -65,6 +65,12 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (navigator.userAgent.includes("Mac")) {
     document.documentElement.classList.add("macos");
   }
+  // Show window now that content is ready (was hidden to avoid blank-frame flash),
+  // then invoke focus_window so WKWebView is first responder — not the <select>.
+  const win = getCurrentWindow();
+  win.show().catch(() => {});
+  invoke("focus_window").catch(() => {});
+
   enableModernWindowStyle({ cornerRadius: 12, offsetX: -12 }).catch(() => {});
 
   onActivate((path) => invoke("set_wallpaper", { path }).then(() => flashApplied(path)).catch(console.error));
