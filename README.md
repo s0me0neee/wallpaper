@@ -1,6 +1,6 @@
-# wallpaper
+# wall
 
-A lightweight floating wallpaper picker built with [Tauri v2](https://tauri.app). Browse a directory of images in a compact thumbnail grid, pick one, and set it as your wallpaper.
+A lightweight floating wallpaper picker built with [Tauri v2](https://tauri.app). Browse a directory of images in a compact thumbnail grid, pick one, and set it as your wallpaper — or set one directly from the command line.
 
 ## Features
 
@@ -10,7 +10,21 @@ A lightweight floating wallpaper picker built with [Tauri v2](https://tauri.app)
 - Ctrl +/- to zoom the grid (2–8 columns)
 - hjkl / arrow key navigation
 - Config auto-saved — remembers last directory, sort order, and column count
+- Post-command hooks — run shell commands (or send a notification) after every wallpaper change
+- CLI mode — set a wallpaper from the terminal without opening the GUI
 - Esc or ✕ to close
+
+## CLI
+
+```bash
+wall /path/to/image.jpg        # set wallpaper, no GUI
+wall -v  /path/to/image.jpg    # debug logging
+wall -vv /path/to/image.jpg    # trace logging
+wall -q  /path/to/image.jpg    # silent (errors only)
+wall                           # open the GUI picker
+```
+
+Flags can be combined with short clusters: `wall -vq` is valid (quiet wins).
 
 ## Requirements
 
@@ -40,7 +54,7 @@ BENCH=1 pnpm tauri dev   # run thumbnail benchmarks and exit
 pnpm tauri build
 ```
 
-The release binary is placed in `src-tauri/target/release/`.
+The release binary is placed in `src-tauri/target/release/` as `wall`.
 
 ## Benchmarks
 
@@ -65,14 +79,22 @@ Runs a two-phase benchmark: a one-shot stats report (mean, p25/p50/p75, img/s fo
 
 ## Config
 
-Saved automatically to `~/.config/wallpaper/config.toml`:
+Saved automatically to `~/.config/wallpaper/config.toml` (on macOS, falls back to `~/Library/Application Support/wallpaper/config.toml` if `~/.config` doesn't exist):
 
 ```toml
 image_dir = "/home/user/Pictures/wallpaper"
 order = "name"
 number_of_cols = 4
 subdir = false
+
+[post_command]
+cmds = [
+  "notify-send 'Wallpaper changed' '${{wallpaper}}'",
+  "${{notify 'Wallpaper changed'}}",   # native notification via Tauri
+]
 ```
+
+`${{wallpaper}}` in any command is replaced with the absolute path of the newly set image. `${{notify 'message'}}` sends a native OS notification without spawning a shell.
 
 ## Thumbnail Cache
 
@@ -80,5 +102,6 @@ Thumbnails are cached in `~/.cache/wallpaper/thumbnails/`. The cache is self-man
 
 ## Tech Stack
 
-- **Backend** — Rust, Tauri v2, rayon, image crate (Lanczos3 resize)
+- **Backend** — Rust, Tauri v2, rayon, image crate (Lanczos3 resize), duct
 - **Frontend** — TypeScript, Vite
+- **Plugins** — tauri-plugin-cli, tauri-plugin-dialog, tauri-plugin-log, tauri-plugin-notification, tauri-plugin-opener
