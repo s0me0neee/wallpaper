@@ -118,10 +118,11 @@ pub fn run() {
             mac_rounded_corners::reposition_traffic_lights,
             mac_rounded_corners::focus_window,
         ])
-        .run(tauri::generate_context!(), move |_app, event| {
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(move |_app, event| {
             if let tauri::RunEvent::Exit = event {
                 log::info!("uptime: {:.2?}", start.elapsed());
             }
-        })
-        .expect("error while running tauri application");
+        });
 }
