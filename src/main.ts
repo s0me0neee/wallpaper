@@ -70,7 +70,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   const win = getCurrentWindow();
   requestAnimationFrame(() => {
     win.show().catch(() => {});
-    invoke("focus_window").catch(() => {});
+    invoke("focus_window").then(() => (document.activeElement as HTMLElement | null)?.blur()).catch(() => {});
   });
 
   enableModernWindowStyle({ cornerRadius: 12, offsetX: -12 }).catch(() => {});
@@ -117,7 +117,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   // Blur any form control that may have grabbed focus during config load
   (document.activeElement as HTMLElement | null)?.blur();
-  invoke("focus_window").catch(() => {});
+  invoke("focus_window").then(() => (document.activeElement as HTMLElement | null)?.blur()).catch(() => {});
 
   if (appConfig.number_of_cols !== 4) applyColumns(appConfig.number_of_cols);
 

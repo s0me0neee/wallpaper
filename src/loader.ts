@@ -27,7 +27,7 @@ export async function loadImages(dir?: string, sort = currentSort): Promise<void
     grid.classList.add("reorder-out");
     await new Promise<void>(r => setTimeout(r, 140));
     grid.classList.remove("reorder-out");
-    invoke("focus_window").catch(console.error);
+    invoke("focus_window").then(() => (document.activeElement as HTMLElement | null)?.blur()).catch(console.error);
   }
 
   grid.innerHTML = '<p class="status">Loading...</p>';
@@ -51,7 +51,7 @@ export async function loadImages(dir?: string, sort = currentSort): Promise<void
         grid.innerHTML = '<p class="status">No images found.</p>';
       } else {
         setSelected(0);
-        invoke("focus_window").catch(console.error);
+        invoke("focus_window").then(() => (document.activeElement as HTMLElement | null)?.blur()).catch(console.error);
       }
       console.log(`[wallpaper] Done — ${e.payload.loaded} loaded, ${e.payload.skipped} skipped`);
     }),

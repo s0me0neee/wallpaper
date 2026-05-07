@@ -113,10 +113,10 @@ pub fn run() {
             commands::get_config,
             commands::save_config,
             commands::set_wallpaper,
+            commands::focus_window,
             mac_rounded_corners::enable_rounded_corners,
             mac_rounded_corners::enable_modern_window_style,
             mac_rounded_corners::reposition_traffic_lights,
-            mac_rounded_corners::focus_window,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
