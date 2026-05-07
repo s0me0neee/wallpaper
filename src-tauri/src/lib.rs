@@ -46,6 +46,7 @@ pub fn run() {
         )
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .manage(Mutex::new(cfg))
         .setup(|app| {
             let cfg = app.state::<Mutex<config::Setting>>().lock().unwrap().clone();

@@ -15,6 +15,7 @@ use std::{
     },
 };
 use tauri::{Emitter, State};
+use tauri_plugin_notification::NotificationExt;
 
 #[tauri::command]
 pub fn start_load_images(
@@ -108,7 +109,7 @@ fn parse_notify(cmd: &str) -> Option<&str> {
 }
 
 #[tauri::command]
-pub fn set_wallpaper(path: String, state: State<Mutex<config::Setting>>) -> Result<(), String> {
+pub fn set_wallpaper(path: String, state: State<Mutex<config::Setting>>, app: tauri::AppHandle) -> Result<(), String> {
     wp::set_from_path(&path).map_err(|e| e.to_string())?;
 
     let cmds = state.lock().unwrap().post_command.cmds.clone();
@@ -127,11 +128,7 @@ pub fn set_wallpaper(path: String, state: State<Mutex<config::Setting>>) -> Resu
 
                 if let Some(body) = parse_notify(&cmd_str) {
                     log::info!("[postcmd] [{n}] notify → {body}");
-                    match notify_rust::Notification::new()
-                        .summary("wallpaper")
-                        .body(body)
-                        .show()
-                    {
+                    match app.notification().builder().title("wallpaper").body(body).show() {
                         Ok(_)  => log::info!("[postcmd] [{n}] notification sent"),
                         Err(e) => log::warn!("[postcmd] [{n}] notification failed: {e}"),
                     }
