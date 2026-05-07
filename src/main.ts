@@ -101,7 +101,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     saveConfig();
   });
 
-  appConfig = await invoke<AppConfig>("get_config");
+  const [config, testDir] = await Promise.all([
+    invoke<AppConfig>("get_config"),
+    invoke<string | null>("get_startup_dir"),
+  ]);
+  appConfig = config;
 
   // Sync UI to saved config
   const sortEl = document.getElementById("sort-by") as HTMLSelectElement;
@@ -111,7 +115,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   if (appConfig.number_of_cols !== 4) applyColumns(appConfig.number_of_cols);
 
-  const testDir  = await invoke<string | null>("get_startup_dir");
   const startDir = testDir ?? appConfig.image_dir ?? undefined;
   loadImages(startDir, appConfig.order);
 });

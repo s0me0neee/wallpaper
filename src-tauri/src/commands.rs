@@ -36,7 +36,7 @@ pub fn start_load_images(
     log::info!("Found {} image(s)", total);
 
     let threads = std::thread::available_parallelism()
-        .map(|n| n.get().clamp(2, 6))
+        .map(|n| n.get().clamp(2, 8))
         .unwrap_or(4);
 
     std::thread::spawn(move || {

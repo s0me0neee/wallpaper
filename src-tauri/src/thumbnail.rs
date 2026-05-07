@@ -7,9 +7,9 @@ const MAX_CACHE_DAYS: u64 = 30;
 const MAX_CACHE_AGE_SECS: u64 = MAX_CACHE_DAYS * 24 * 3600; // 30 days
 const MAX_CACHE_SIZE_MB: u64 = 200;
 
-pub const THUMB_W: u32 = 1000;
-pub const THUMB_H: u32 = 600;
-pub const THUMB_QUALITY: u8 = 92;
+pub const THUMB_W: u32 = 480;
+pub const THUMB_H: u32 = 300;
+pub const THUMB_QUALITY: u8 = 80;
 
 fn fnv1a(data: &[u8]) -> u64 {
     data.iter().fold(14695981039346656037u64, |h, &b| {

@@ -33,32 +33,29 @@ export async function loadImages(dir?: string, sort = currentSort): Promise<void
   grid.innerHTML = '<p class="status">Loading...</p>';
   let first = true;
 
-  const unlistenThumb = await listen<ImageEntry>("thumbnail", (e) => {
-    if (first) {
-      grid.innerHTML = "";
-      if (!dir) {
-        const p = e.payload.path;
-        dirLabel.textContent = p.substring(0, p.lastIndexOf("/"));
+  const [unlistenThumb, unlistenDone] = await Promise.all([
+    listen<ImageEntry>("thumbnail", (e) => {
+      if (first) {
+        grid.innerHTML = "";
+        if (!dir) {
+          const p = e.payload.path;
+          dirLabel.textContent = p.substring(0, p.lastIndexOf("/"));
+        }
+        first = false;
       }
-      first = false;
       appendThumb(e.payload, false, currentSort);
-    } else {
-      appendThumb(e.payload, false, currentSort);
-    }
-  });
-
-  const unlistenDone = await listen<LoadDone>("load-done", (e) => {
-    stopListening();
-    if (first) {
-      grid.innerHTML = '<p class="status">No images found.</p>';
-    } else {
-      setSelected(0);
-      invoke("focus_window").then(() => {
-        console.log("[focus] focus_window resolved, activeElement:", document.activeElement?.tagName);
-      }).catch(console.error);
-    }
-    console.log(`[wallpaper] Done — ${e.payload.loaded} loaded, ${e.payload.skipped} skipped`);
-  });
+    }),
+    listen<LoadDone>("load-done", (e) => {
+      stopListening();
+      if (first) {
+        grid.innerHTML = '<p class="status">No images found.</p>';
+      } else {
+        setSelected(0);
+        invoke("focus_window").catch(console.error);
+      }
+      console.log(`[wallpaper] Done — ${e.payload.loaded} loaded, ${e.payload.skipped} skipped`);
+    }),
+  ]);
 
   unlisteners = [unlistenThumb, unlistenDone];
 

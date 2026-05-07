@@ -24,7 +24,8 @@ export function getSelectedIndex(): number {
 }
 
 export function getItems(): HTMLElement[] {
-  return Array.from(document.querySelectorAll<HTMLElement>(".thumb-item"));
+  return Array.from(document.querySelectorAll<HTMLElement>(".thumb-item"))
+    .sort((a, b) => Number(a.dataset.index) - Number(b.dataset.index));
 }
 
 export function resetSelection(): void {
@@ -69,6 +70,7 @@ export function appendThumb(entry: ImageEntry, _selectIt = false, sort = "name")
   const item = document.createElement("div");
   item.className = "thumb-item";
   item.dataset.index = String(entry.index);
+  item.style.order = String(entry.index);
 
   const filename = entry.path.split("/").pop() ?? "";
 
@@ -96,9 +98,5 @@ export function appendThumb(entry: ImageEntry, _selectIt = false, sort = "name")
     if (entry.path) _onActivate?.(entry.path);
   });
 
-  // Insert at the correct sorted position rather than appending blindly.
-  const items = getItems();
-  const after = items.find((el) => Number(el.dataset.index) > entry.index) ?? null;
-  grid.insertBefore(item, after);
-
+  grid.appendChild(item);
 }
