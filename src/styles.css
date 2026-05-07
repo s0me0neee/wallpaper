@@ -18,7 +18,15 @@
   --radius: 12px;
 }
 
-html, body {
+html {
+  height: 100%;
+  background: transparent;
+  /* clip at the WebKit root layer — fixes white corners on macOS */
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+body {
   height: 100%;
   background: transparent;
   overflow: hidden;

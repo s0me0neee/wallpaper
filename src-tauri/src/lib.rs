@@ -6,6 +6,7 @@ pub mod thumbnail;
 mod types;
 
 use std::sync::Mutex;
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -43,6 +44,16 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(Mutex::new(cfg))
+        .setup(|app| {
+            let cfg = app.state::<Mutex<config::Setting>>().lock().unwrap().clone();
+            if let Some(win) = app.get_webview_window("main") {
+                let _ = win.set_size(tauri::Size::Logical(tauri::LogicalSize {
+                    width: cfg.window_width as f64,
+                    height: cfg.window_height as f64,
+                }));
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             commands::start_load_images,
             commands::get_startup_dir,

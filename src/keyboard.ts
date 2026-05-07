@@ -2,12 +2,14 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { applyColumns, cols } from "./zoom";
 import { getItems, getSelectedIndex, setSelected } from "./grid";
 
+const isMac = navigator.platform.startsWith("Mac");
+
 export function initKeyboard(): void {
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") { getCurrentWindow().close(); return; }
 
-    // Zoom: Ctrl +/-
-    if (e.ctrlKey) {
+    // Zoom: Cmd +/- on Mac, Ctrl +/- elsewhere
+    if (isMac ? e.metaKey : e.ctrlKey) {
       if (e.key === "+" || e.key === "=") { e.preventDefault(); applyColumns(cols - 1); }
       else if (e.key === "-")             { e.preventDefault(); applyColumns(cols + 1); }
       return;

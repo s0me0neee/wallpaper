@@ -12,6 +12,10 @@ pub struct Setting {
     pub number_of_cols: u16,
     #[serde(default)]
     pub subdir: bool,
+    #[serde(default = "default_win_w")]
+    pub window_width: u32,
+    #[serde(default = "default_win_h")]
+    pub window_height: u32,
     // not persisted yet — kept for future use
     #[serde(skip)]
     #[allow(dead_code)]
@@ -22,6 +26,8 @@ pub struct Setting {
 }
 
 fn default_cols() -> u16 { 4 }
+fn default_win_w() -> u32 { 720 }
+fn default_win_h() -> u32 { 520 }
 
 impl Default for Setting {
     fn default() -> Self {
@@ -30,6 +36,8 @@ impl Default for Setting {
             order: types::SortBy::default(),
             number_of_cols: default_cols(),
             subdir: false,
+            window_width: default_win_w(),
+            window_height: default_win_h(),
             post_command: None,
             backend: None,
         }
