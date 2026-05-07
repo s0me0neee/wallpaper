@@ -18,18 +18,15 @@
   --radius: 12px;
 }
 
-html {
+html, body {
   height: 100%;
   background: transparent;
-  /* clip at the WebKit root layer — fixes white corners on macOS */
-  border-radius: var(--radius);
   overflow: hidden;
 }
 
-body {
-  height: 100%;
-  background: transparent;
-  overflow: hidden;
+html {
+  /* clip-path at the compositor level — reliable fix for white corners on macOS WebKit */
+  clip-path: inset(0 round var(--radius));
 }
 
 body {
@@ -151,6 +148,47 @@ body {
   border-color: #e05555;
   background: rgba(220, 60, 60, 0.15);
   color: #e05555;
+}
+
+/* ── settings panel ── */
+.settings-panel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.settings-panel.hidden { display: none; }
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.setting-row input[type="number"] {
+  width: 64px;
+  padding: 3px 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-size: 0.72rem;
+  text-align: right;
+  appearance: textfield;
+  transition: border-color 0.15s;
+}
+
+.setting-row input[type="number"]:hover,
+.setting-row input[type="number"]:focus {
+  border-color: var(--accent);
+  outline: none;
 }
 
 /* ── grid ── */

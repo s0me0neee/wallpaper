@@ -51,6 +51,9 @@ pub fn run() {
                     width: cfg.window_width as f64,
                     height: cfg.window_height as f64,
                 }));
+                // Clear WKWebView's default opaque background — fixes white corners on macOS
+                #[cfg(target_os = "macos")]
+                let _ = win.set_background_color(None);
             }
             Ok(())
         })
