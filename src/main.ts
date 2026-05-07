@@ -65,11 +65,13 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (navigator.userAgent.includes("Mac")) {
     document.documentElement.classList.add("macos");
   }
-  // Show window now that content is ready (was hidden to avoid blank-frame flash),
-  // then invoke focus_window so WKWebView is first responder — not the <select>.
+  // Delay show() by one rAF so WKWebView has committed its first paint before the
+  // window is revealed — prevents the white compositor flash (tauri-apps/tauri#1564).
   const win = getCurrentWindow();
-  win.show().catch(() => {});
-  invoke("focus_window").catch(() => {});
+  requestAnimationFrame(() => {
+    win.show().catch(() => {});
+    invoke("focus_window").catch(() => {});
+  });
 
   enableModernWindowStyle({ cornerRadius: 12, offsetX: -12 }).catch(() => {});
 
