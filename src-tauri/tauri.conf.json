@@ -1,7 +1,6 @@
 {
 	"$schema": "https://schema.tauri.app/config/2",
 	"productName": "wall",
-	"description": "Floating wallpaper picker and CLI setter",
 	"version": "1.0.0",
 	"identifier": "com.maot27.wallpaper",
 	"build": {
