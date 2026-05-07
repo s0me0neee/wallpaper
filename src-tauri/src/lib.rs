@@ -43,6 +43,7 @@ pub fn run() {
     test::bench_if_requested();
     std::thread::spawn(thumbnail::cleanup);
 
+    let start = std::time::Instant::now();
     let cfg = config::load();
     let level = verbosity_level();
 
@@ -77,7 +78,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .manage(Mutex::new(cfg))
-        .setup(|app| {
+        .setup(move |app| {
             // --- CLI mode: `wall <image>` ---
             if let Ok(matches) = app.cli().matches() {
                 if let Some(arg) = matches.args.get("image") {
@@ -89,6 +90,7 @@ pub fn run() {
                                 std::process::exit(1);
                             }
                         }
+                        log::debug!("startup: {:.2?}", start.elapsed());
                         std::process::exit(0);
                     }
                 }
@@ -116,6 +118,10 @@ pub fn run() {
             mac_rounded_corners::reposition_traffic_lights,
             mac_rounded_corners::focus_window,
         ])
-        .run(tauri::generate_context!())
+        .run(tauri::generate_context!(), move |_app, event| {
+            if let tauri::RunEvent::Exit = event {
+                log::info!("uptime: {:.2?}", start.elapsed());
+            }
+        })
         .expect("error while running tauri application");
 }
