@@ -176,35 +176,6 @@ pub fn reposition_traffic_lights<R: Runtime>(
     }
 }
 
-/// JS-side `setFocus()` only calls `makeKeyAndOrderFront` on the NSWindow but
-/// doesn't activate the app itself, so keyboard events still go to whatever
-/// was previously in front. This command also calls
-/// `[NSApp activateIgnoringOtherApps:YES]` to fix that.
-#[tauri::command]
-pub fn focus_window<R: Runtime>(
-    _app: AppHandle<R>,
-    window: WebviewWindow<R>,
-) -> Result<(), String> {
-    #[cfg(target_os = "macos")]
-    {
-        window
-            .with_webview(|webview| {
-                #[cfg(target_os = "macos")]
-                unsafe {
-                    let ns_window: id = webview.ns_window() as id;
-                    let wkwebview: id = webview.inner() as id;
-                    if let Some(cls) = objc::runtime::Class::get("NSApplication") {
-                        let ns_app: id = msg_send![cls, sharedApplication];
-                        let _: () = msg_send![ns_app, activateIgnoringOtherApps: cocoa::base::YES];
-                    }
-                    let _: () = msg_send![ns_window, makeKeyAndOrderFront: cocoa::base::nil];
-                    let _: () = msg_send![ns_window, makeFirstResponder: wkwebview];
-                }
-            })
-            .map_err(|e| e.to_string())?;
-    }
-    Ok(())
-}
 
 #[cfg(target_os = "macos")]
 unsafe fn position_traffic_lights(ns_window: id, offset_x: f64, offset_y: f64) {

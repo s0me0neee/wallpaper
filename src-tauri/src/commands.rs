@@ -14,8 +14,39 @@ use std::{
         Mutex,
     },
 };
-use tauri::{Emitter, State};
+use tauri::{Emitter, Runtime, State};
 use tauri_plugin_notification::NotificationExt;
+
+/// Makes WKWebView (not a form control) the first responder so hjkl/arrow keys
+/// work immediately without clicking the grid first. Moved here from
+/// mac_rounded_corners.rs so the plugin postinstall can't wipe it out.
+#[tauri::command]
+pub fn focus_window<R: Runtime>(
+    _app: tauri::AppHandle<R>,
+    window: tauri::WebviewWindow<R>,
+) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        window
+            .with_webview(|webview| {
+                unsafe {
+                    use cocoa::base::{nil, id};
+                    #[allow(unused_imports)]
+                    use objc::{msg_send, sel, sel_impl};
+                    let ns_window: id = webview.ns_window() as id;
+                    let wkwebview: id = webview.inner() as id;
+                    if let Some(cls) = objc::runtime::Class::get("NSApplication") {
+                        let ns_app: id = objc::msg_send![cls, sharedApplication];
+                        let _: () = objc::msg_send![ns_app, activateIgnoringOtherApps: cocoa::base::YES];
+                    }
+                    let _: () = objc::msg_send![ns_window, makeKeyAndOrderFront: nil];
+                    let _: () = objc::msg_send![ns_window, makeFirstResponder: wkwebview];
+                }
+            })
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
 
 #[tauri::command]
 pub fn start_load_images(

@@ -115,6 +115,10 @@ window.addEventListener("DOMContentLoaded", async () => {
   (document.getElementById("win-width")  as HTMLInputElement).value = String(appConfig.window_width);
   (document.getElementById("win-height") as HTMLInputElement).value = String(appConfig.window_height);
 
+  // Blur any form control that may have grabbed focus during config load
+  (document.activeElement as HTMLElement | null)?.blur();
+  invoke("focus_window").catch(() => {});
+
   if (appConfig.number_of_cols !== 4) applyColumns(appConfig.number_of_cols);
 
   const startDir = testDir ?? appConfig.image_dir ?? undefined;
