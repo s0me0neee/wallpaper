@@ -22,6 +22,14 @@ export async function loadImages(dir?: string, sort = currentSort): Promise<void
 
   const grid = document.getElementById("grid")!;
   const dirLabel = document.getElementById("current-dir")!;
+
+  if (grid.querySelector(".thumb-item")) {
+    grid.classList.add("reorder-out");
+    await new Promise<void>(r => setTimeout(r, 140));
+    grid.classList.remove("reorder-out");
+    invoke("focus_window").catch(console.error);
+  }
+
   grid.innerHTML = '<p class="status">Loading...</p>';
   let first = true;
 

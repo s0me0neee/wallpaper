@@ -29,5 +29,11 @@ pub enum SortBy {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PostCommand {
-    cmds: Vec<String>,
+    // cmds: Vec<Command>,
 }
+
+// #[derive(Serialize, Deserialize, Debug, Clone)]
+// pub struct Command {
+//     cmd: Option<duct::Expression>,
+//     cmd_raw: &str,
+// }

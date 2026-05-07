@@ -20,9 +20,6 @@ pub struct Setting {
     #[serde(skip)]
     #[allow(dead_code)]
     pub post_command: Option<types::PostCommand>,
-    #[serde(skip)]
-    #[allow(dead_code)]
-    pub backend: Option<Backend>,
 }
 
 fn default_cols() -> u16 {
@@ -45,7 +42,6 @@ impl Default for Setting {
             window_width: default_win_w(),
             window_height: default_win_h(),
             post_command: None,
-            backend: None,
         }
     }
 }

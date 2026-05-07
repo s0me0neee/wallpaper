@@ -5,7 +5,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { initColumns, applyColumns, onColsChange } from "./zoom";
 import { loadImages, currentDir, currentSort } from "./loader";
 import { initKeyboard } from "./keyboard";
-import { onActivate } from "./grid";
+import { onActivate, flashApplied } from "./grid";
 import type { AppConfig } from "./types";
 
 let appConfig: AppConfig = {
@@ -67,7 +67,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
   enableModernWindowStyle({ cornerRadius: 12, offsetX: -12 }).catch(() => {});
 
-  onActivate((path) => invoke("set_wallpaper", { path }).catch(console.error));
+  onActivate((path) => invoke("set_wallpaper", { path }).then(() => flashApplied(path)).catch(console.error));
   console.log("[startup] onActivate registered");
 
   initColumns();
@@ -86,6 +86,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const sort = (e.target as HTMLSelectElement).value;
     appConfig.order = sort;
     saveConfig();
+    (e.target as HTMLSelectElement).blur();
     loadImages(currentDir, sort);
   });
 

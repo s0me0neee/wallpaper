@@ -4,6 +4,14 @@ let selectedIndex = -1;
 let _onActivate: ((path: string) => void) | null = null;
 
 export function onActivate(cb: (path: string) => void): void { _onActivate = cb; }
+
+export function flashApplied(path: string): void {
+  const item = getItems().find(el => el.querySelector("img")?.title === path);
+  if (!item) return;
+  item.classList.add("applied");
+  item.addEventListener("animationend", () => item.classList.remove("applied"), { once: true });
+}
+
 export function triggerActivate(): void {
   const items = getItems();
   if (selectedIndex < 0 || selectedIndex >= items.length) return;
