@@ -1,3 +1,7 @@
+export interface PostCommand {
+  cmds: string[];
+}
+
 export interface AppConfig {
   image_dir: string | null;
   order: string;
@@ -5,6 +9,7 @@ export interface AppConfig {
   subdir: boolean;
   window_width: number;
   window_height: number;
+  post_command: PostCommand;
 }
 
 export interface ImageEntry {

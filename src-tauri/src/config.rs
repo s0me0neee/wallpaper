@@ -16,10 +16,8 @@ pub struct Setting {
     pub window_width: u32,
     #[serde(default = "default_win_h")]
     pub window_height: u32,
-    // not persisted yet — kept for future use
-    #[serde(skip)]
-    #[allow(dead_code)]
-    pub post_command: Option<types::PostCommand>,
+    #[serde(default)]
+    pub post_command: types::PostCommand,
 }
 
 fn default_cols() -> u16 {
@@ -41,7 +39,7 @@ impl Default for Setting {
             subdir: false,
             window_width: default_win_w(),
             window_height: default_win_h(),
-            post_command: None,
+            post_command: types::PostCommand::default(),
         }
     }
 }
@@ -71,7 +69,22 @@ pub enum ConfigError {
 }
 
 fn config_path() -> Option<PathBuf> {
-    dirs::config_dir().map(|d| d.join("wallpaper").join("config.toml"))
+    #[cfg(target_os = "macos")]
+    {
+        let xdg = dirs::home_dir().map(|h| h.join(".config").join("wallpaper").join("config.toml"));
+        if let Some(ref p) = xdg {
+            if p.exists() || p.parent().map(|d| d.exists()).unwrap_or(false) {
+                return xdg;
+            }
+        }
+        // ~/.config doesn't exist yet — fall back to ~/Library/Application Support
+        dirs::config_dir().map(|d| d.join("wallpaper").join("config.toml"))
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        dirs::config_dir().map(|d| d.join("wallpaper").join("config.toml"))
+    }
 }
 
 fn ensure_file(path: &std::path::Path) -> Result<(), ConfigError> {

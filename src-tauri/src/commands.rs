@@ -103,6 +103,29 @@ pub fn save_config(setting: config::Setting, state: State<Mutex<config::Setting>
 }
 
 #[tauri::command]
-pub fn set_wallpaper(path: String) -> Result<(), String> {
-    wp::set_from_path(&path).map_err(|e| e.to_string())
+pub fn set_wallpaper(path: String, state: State<Mutex<config::Setting>>) -> Result<(), String> {
+    wp::set_from_path(&path).map_err(|e| e.to_string())?;
+
+    let cmds = state.lock().unwrap().post_command.cmds.clone();
+    if !cmds.is_empty() {
+        std::thread::spawn(move || {
+            for raw in &cmds {
+                let cmd_str = raw.replace("${wallpaper}", &path);
+                log::info!("[postcmd] $ {cmd_str}");
+
+                #[cfg(unix)]
+                let expr = duct::cmd!("sh", "-c", &cmd_str);
+                #[cfg(windows)]
+                let expr = duct::cmd!("cmd", "/C", &cmd_str);
+
+                match expr.stderr_to_stdout().read() {
+                    Ok(out) if out.trim().is_empty() => {}
+                    Ok(out) => log::info!("[postcmd] {out}"),
+                    Err(e) => log::warn!("[postcmd] error: {e}"),
+                }
+            }
+        });
+    }
+
+    Ok(())
 }

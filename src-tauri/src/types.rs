@@ -27,13 +27,7 @@ pub enum SortBy {
     SizeAsc, // smallest first
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct PostCommand {
-    // cmds: Vec<Command>,
+    pub cmds: Vec<String>,
 }
-
-// #[derive(Serialize, Deserialize, Debug, Clone)]
-// pub struct Command {
-//     cmd: Option<duct::Expression>,
-//     cmd_raw: &str,
-// }
