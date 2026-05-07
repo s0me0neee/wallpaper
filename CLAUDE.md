@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code when working with this repository.
 
+## Commands
+
+Commit after every major change or new feature added.
+
 ## Project Overview
 
 A cross-platform desktop wallpaper viewer/picker built with **Tauri v2** (Rust backend + TypeScript/Vite frontend). Displays a thumbnail grid from a directory of images. Runs as a small floating window, always on top.
@@ -71,12 +75,14 @@ Commands must be registered in `generate_handler![]` in `lib.rs` **and** listed 
 ### Config
 
 Persisted at `~/.config/wallpaper/config.toml`:
+
 ```toml
 image_dir = "/home/user/Pictures/wallpaper"
 order = "name"
 number_of_cols = 4
 subdir = false
 ```
+
 Auto-saved whenever the user changes directory, sort order, or column count.
 
 ### Key Dependencies (Rust)

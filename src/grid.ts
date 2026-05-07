@@ -56,7 +56,7 @@ function formatMeta(entry: ImageEntry, sort: string): string {
   }
 }
 
-export function appendThumb(entry: ImageEntry, selectIt = false, sort = "name"): void {
+export function appendThumb(entry: ImageEntry, _selectIt = false, sort = "name"): void {
   const grid = document.getElementById("grid")!;
   const item = document.createElement("div");
   item.className = "thumb-item";
@@ -93,5 +93,4 @@ export function appendThumb(entry: ImageEntry, selectIt = false, sort = "name"):
   const after = items.find((el) => Number(el.dataset.index) > entry.index) ?? null;
   grid.insertBefore(item, after);
 
-  if (selectIt) setSelected(0);
 }

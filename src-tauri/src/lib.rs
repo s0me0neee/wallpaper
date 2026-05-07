@@ -67,6 +67,7 @@ pub fn run() {
             mac_rounded_corners::enable_rounded_corners,
             mac_rounded_corners::enable_modern_window_style,
             mac_rounded_corners::reposition_traffic_lights,
+            mac_rounded_corners::focus_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

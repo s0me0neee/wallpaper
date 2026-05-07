@@ -6,6 +6,7 @@ const isMac = navigator.platform.startsWith("Mac");
 
 export function initKeyboard(): void {
   window.addEventListener("keydown", (e) => {
+    console.log("[kbd] keydown", e.key, "target:", (e.target as HTMLElement).tagName, "focus:", document.activeElement?.tagName);
     if (e.key === "Escape") { getCurrentWindow().close(); return; }
 
     // Zoom: Cmd +/- on Mac, Ctrl +/- elsewhere

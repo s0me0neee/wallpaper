@@ -61,16 +61,23 @@ function initSettings(): void {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
+  console.log("[startup] DOMContentLoaded");
   if (navigator.userAgent.includes("Mac")) {
     document.documentElement.classList.add("macos");
   }
   enableModernWindowStyle({ cornerRadius: 12, offsetX: -12 }).catch(() => {});
 
   onActivate((path) => invoke("set_wallpaper", { path }).catch(console.error));
+  console.log("[startup] onActivate registered");
 
   initColumns();
+  console.log("[startup] columns initialized");
+
   initKeyboard();
+  console.log("[startup] keyboard handler registered");
+
   initSettings();
+  console.log("[startup] settings initialized");
 
   document.getElementById("win-close")!.addEventListener("click", () => getCurrentWindow().close());
   document.getElementById("pick-dir")!.addEventListener("click", pickDirectory);

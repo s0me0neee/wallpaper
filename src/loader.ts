@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { appendThumb, resetSelection } from "./grid";
+import { appendThumb, resetSelection, setSelected } from "./grid";
 import type { ImageEntry, LoadDone } from "./types";
 
 export let currentDir: string | undefined;
@@ -14,6 +14,7 @@ export function stopListening(): void {
 }
 
 export async function loadImages(dir?: string, sort = currentSort): Promise<void> {
+  console.log("[loader] loadImages start, dir:", dir ?? "(none)", "sort:", sort);
   stopListening();
   currentDir = dir;
   currentSort = sort;
@@ -32,7 +33,7 @@ export async function loadImages(dir?: string, sort = currentSort): Promise<void
         dirLabel.textContent = p.substring(0, p.lastIndexOf("/"));
       }
       first = false;
-      appendThumb(e.payload, true, currentSort);
+      appendThumb(e.payload, false, currentSort);
     } else {
       appendThumb(e.payload, false, currentSort);
     }
@@ -40,7 +41,14 @@ export async function loadImages(dir?: string, sort = currentSort): Promise<void
 
   const unlistenDone = await listen<LoadDone>("load-done", (e) => {
     stopListening();
-    if (first) grid.innerHTML = '<p class="status">No images found.</p>';
+    if (first) {
+      grid.innerHTML = '<p class="status">No images found.</p>';
+    } else {
+      setSelected(0);
+      invoke("focus_window").then(() => {
+        console.log("[focus] focus_window resolved, activeElement:", document.activeElement?.tagName);
+      }).catch(console.error);
+    }
     console.log(`[wallpaper] Done — ${e.payload.loaded} loaded, ${e.payload.skipped} skipped`);
   });
 
