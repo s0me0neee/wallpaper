@@ -25,8 +25,14 @@ fn verbosity_level() -> log::LevelFilter {
             v += flags.chars().filter(|c| *c == 'v').count();
         }
     }
+    // Dev builds: all logs by default; release (GUI + CLI): info by default.
+    #[cfg(debug_assertions)]
+    let base = log::LevelFilter::Trace;
+    #[cfg(not(debug_assertions))]
+    let base = log::LevelFilter::Info;
+
     match v {
-        0 => log::LevelFilter::Info,
+        0 => base,
         1 => log::LevelFilter::Debug,
         _ => log::LevelFilter::Trace,
     }
