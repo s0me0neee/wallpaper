@@ -1,0 +1,78 @@
+use crate::{
+    scanner,
+    thumbnail,
+    types::{ImageEntry, LoadDone, SortBy},
+};
+use base64::{engine::general_purpose::STANDARD, Engine};
+use rayon::prelude::*;
+use std::{
+    path::PathBuf,
+    sync::atomic::{AtomicUsize, Ordering},
+};
+use tauri::Emitter;
+
+#[tauri::command]
+pub fn start_load_images(
+    dir: Option<String>,
+    sort_by: Option<SortBy>,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    let dir_path: PathBuf = match dir {
+        Some(d) => PathBuf::from(d),
+        None => dirs::picture_dir()
+            .ok_or_else(|| "Could not find pictures directory".to_string())?,
+    };
+
+    log::info!("Scanning: {}", dir_path.display());
+
+    let paths = scanner::scan(&dir_path, sort_by.unwrap_or_default())?;
+    let total = paths.len();
+    log::info!("Found {} image(s)", total);
+
+    let threads = std::thread::available_parallelism()
+        .map(|n| n.get().clamp(2, 6))
+        .unwrap_or(4);
+
+    std::thread::spawn(move || {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .build()
+            .expect("failed to build thread pool");
+
+        let loaded = AtomicUsize::new(0);
+        let skipped = AtomicUsize::new(0);
+
+        pool.install(|| {
+            paths.par_iter().for_each(|path| {
+                let name = path
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .into_owned();
+
+                match thumbnail::get(path) {
+                    Some(buf) => {
+                        let n = loaded.fetch_add(1, Ordering::Relaxed) + 1;
+                        log::debug!("[{n}/{total}] {name}");
+                        app.emit("thumbnail", ImageEntry {
+                            path: path.to_string_lossy().into_owned(),
+                            thumbnail: format!("data:image/jpeg;base64,{}", STANDARD.encode(&buf)),
+                        })
+                        .ok();
+                    }
+                    None => {
+                        skipped.fetch_add(1, Ordering::Relaxed);
+                        log::warn!("Skipped: {name}");
+                    }
+                }
+            });
+        });
+
+        let n_loaded = loaded.load(Ordering::Relaxed);
+        let n_skipped = skipped.load(Ordering::Relaxed);
+        log::info!("Done — {n_loaded} loaded, {n_skipped} skipped");
+        app.emit("load-done", LoadDone { loaded: n_loaded, skipped: n_skipped }).ok();
+    });
+
+    Ok(())
+}

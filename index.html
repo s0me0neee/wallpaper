@@ -12,6 +12,14 @@
 <body>
   <header class="toolbar">
     <button id="pick-dir">Choose directory</button>
+    <select id="sort-by">
+      <option value="name">Name A→Z</option>
+      <option value="name_desc">Name Z→A</option>
+      <option value="date">Date (newest)</option>
+      <option value="date_old">Date (oldest)</option>
+      <option value="size">Size (largest)</option>
+      <option value="size_asc">Size (smallest)</option>
+    </select>
     <span id="current-dir" class="dir-label"></span>
   </header>
   <div id="grid" class="grid"></div>
