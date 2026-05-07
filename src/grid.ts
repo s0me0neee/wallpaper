@@ -75,6 +75,7 @@ export function appendThumb(entry: ImageEntry, _selectIt = false, sort = "name")
   const filename = entry.path.split("/").pop() ?? "";
 
   const img = document.createElement("img");
+  img.decoding = "async";
   img.src = entry.thumbnail;
   img.alt = filename;
   img.title = entry.path;
