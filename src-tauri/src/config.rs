@@ -44,12 +44,6 @@ impl Default for Setting {
     }
 }
 
-#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-pub enum Backend {
-    MacOSWallpaper,
-    MacOSNative,
-}
-
 #[derive(Error, Debug)]
 pub enum ConfigError {
     #[error("Config file not found: {0}")]

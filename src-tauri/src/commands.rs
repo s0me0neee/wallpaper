@@ -103,6 +103,8 @@ pub fn save_config(setting: config::Setting, state: State<Mutex<config::Setting>
     Ok(())
 }
 
+const POSTCMD: &str = "[postcmd]";
+
 fn parse_notify(cmd: &str) -> Option<&str> {
     let s = cmd.trim();
     s.strip_prefix("${{notify '").and_then(|s| s.strip_suffix("'}}"))
@@ -118,34 +120,36 @@ pub fn set_wallpaper(path: String, state: State<Mutex<config::Setting>>, app: ta
             #[cfg(unix)]
             let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
 
-            log::info!("[postcmd] running {} command(s) for {path}", cmds.len());
+            log::info!("{POSTCMD} running {} command(s) for {path}", cmds.len());
             #[cfg(unix)]
-            log::debug!("[postcmd] shell: {shell}");
+            log::debug!("{POSTCMD} shell: {shell}");
 
             for (i, raw) in cmds.iter().enumerate() {
                 let cmd_str = raw.replace("${{wallpaper}}", &path);
                 let n = i + 1;
 
                 if let Some(body) = parse_notify(&cmd_str) {
-                    log::info!("[postcmd] [{n}] notify → {body}");
+                    log::info!("{POSTCMD} [{n}] notify → {body}");
                     match app.notification().builder().title("wallpaper").body(body).show() {
-                        Ok(_)  => log::info!("[postcmd] [{n}] notification sent"),
-                        Err(e) => log::warn!("[postcmd] [{n}] notification failed: {e}"),
+                        Ok(_)  => log::info!("{POSTCMD} [{n}] notification sent"),
+                        Err(e) => log::warn!("{POSTCMD} [{n}] notification failed: {e}"),
                     }
                     continue;
                 }
 
-                log::info!("[postcmd] [{n}] $ {cmd_str}");
+                log::info!("{POSTCMD} [{n}] $ {cmd_str}");
 
-                #[cfg(unix)]
-                let expr = duct::cmd!(&shell, "-l", "-c", &cmd_str);
-                #[cfg(windows)]
-                let expr = duct::cmd!("cmd", "/C", &cmd_str);
+                let expr = {
+                    #[cfg(unix)]
+                    { duct::cmd!(&shell, "-l", "-c", &cmd_str) }
+                    #[cfg(not(unix))]
+                    { duct::cmd!("cmd", "/C", &cmd_str) }
+                };
 
                 match expr.stderr_to_stdout().read() {
-                    Ok(out) if out.trim().is_empty() => log::info!("[postcmd] [{n}] done"),
-                    Ok(out) => log::info!("[postcmd] [{n}] output:\n{out}"),
-                    Err(e)  => log::warn!("[postcmd] [{n}] error: {e}"),
+                    Ok(out) if out.trim().is_empty() => log::info!("{POSTCMD} [{n}] done"),
+                    Ok(out) => log::info!("{POSTCMD} [{n}] output:\n{out}"),
+                    Err(e)  => log::warn!("{POSTCMD} [{n}] error: {e}"),
                 }
             }
         });
