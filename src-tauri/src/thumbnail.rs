@@ -3,8 +3,8 @@ use std::{
     path::{Path, PathBuf},
     time::UNIX_EPOCH,
 };
-
-const MAX_CACHE_AGE_SECS: u64 = 30 * 24 * 3600; // 30 days
+const MAX_CACHE_DAYS: u64 = 30;
+const MAX_CACHE_AGE_SECS: u64 = MAX_CACHE_DAYS * 24 * 3600; // 30 days
 const MAX_CACHE_SIZE_MB: u64 = 200;
 
 pub const THUMB_W: u32 = 1000;
@@ -44,7 +44,9 @@ pub fn generate(path: &Path) -> Option<Vec<u8>> {
 /// 2. Age — delete entries not written in MAX_CACHE_AGE_SECS.
 /// 3. Size — if still over MAX_CACHE_SIZE_MB, delete oldest first.
 pub fn cleanup() {
-    let Some(dir) = dirs::cache_dir().map(|d| d.join("wallpaper/thumbnails")) else { return };
+    let Some(dir) = dirs::cache_dir().map(|d| d.join("wallpaper/thumbnails")) else {
+        return;
+    };
     if !dir.exists() {
         return;
     }
@@ -70,15 +72,29 @@ pub fn cleanup() {
             let name = path.file_name()?.to_str()?.to_owned();
             let hash_prefix = name.get(..16)?.to_owned();
             let meta = path.metadata().ok()?;
-            let mtime = meta.modified().ok()?.duration_since(UNIX_EPOCH).ok()?.as_secs();
-            Some(Entry { path, hash_prefix, mtime, size: meta.len() })
+            let mtime = meta
+                .modified()
+                .ok()?
+                .duration_since(UNIX_EPOCH)
+                .ok()?
+                .as_secs();
+            Some(Entry {
+                path,
+                hash_prefix,
+                mtime,
+                size: meta.len(),
+            })
         })
         .collect();
 
     let before = entries.len();
 
     // Pass 1: per-hash, keep only the newest version (source image was re-saved).
-    entries.sort_by(|a, b| a.hash_prefix.cmp(&b.hash_prefix).then(b.mtime.cmp(&a.mtime)));
+    entries.sort_by(|a, b| {
+        a.hash_prefix
+            .cmp(&b.hash_prefix)
+            .then(b.mtime.cmp(&a.mtime))
+    });
     let mut last_hash = String::new();
     entries.retain(|e| {
         if e.hash_prefix == last_hash {
@@ -117,15 +133,21 @@ pub fn cleanup() {
 
     let removed = before - entries.len();
     if removed > 0 {
-        log::info!("Cache cleanup: removed {removed} entries, {} remaining", entries.len());
+        log::info!(
+            "Cache cleanup: removed {removed} entries, {} remaining",
+            entries.len()
+        );
     }
 }
 
 pub fn get(path: &Path) -> Option<Vec<u8>> {
     let mtime = path
-        .metadata().ok()?
-        .modified().ok()?
-        .duration_since(UNIX_EPOCH).ok()?
+        .metadata()
+        .ok()?
+        .modified()
+        .ok()?
+        .duration_since(UNIX_EPOCH)
+        .ok()?
         .as_secs();
 
     let cache = cache_path(path, mtime)?;

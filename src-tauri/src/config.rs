@@ -25,9 +25,15 @@ pub struct Setting {
     pub backend: Option<Backend>,
 }
 
-fn default_cols() -> u16 { 4 }
-fn default_win_w() -> u32 { 720 }
-fn default_win_h() -> u32 { 520 }
+fn default_cols() -> u16 {
+    4
+}
+fn default_win_w() -> u32 {
+    720
+}
+fn default_win_h() -> u32 {
+    520
+}
 
 impl Default for Setting {
     fn default() -> Self {
@@ -72,12 +78,12 @@ fn config_path() -> Option<PathBuf> {
     dirs::config_dir().map(|d| d.join("wallpaper").join("config.toml"))
 }
 
-fn ensure_file(path: &PathBuf) -> Result<(), ConfigError> {
+fn ensure_file(path: &std::path::Path) -> Result<(), ConfigError> {
     if path.is_dir() {
-        return Err(ConfigError::NotAFile(path.clone()));
+        return Err(ConfigError::NotAFile(path.to_path_buf()));
     }
     if !path.exists() {
-        return Err(ConfigError::NotFound(path.clone()));
+        return Err(ConfigError::NotFound(path.to_path_buf()));
     }
     Ok(())
 }
