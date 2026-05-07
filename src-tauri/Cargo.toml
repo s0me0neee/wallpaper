@@ -20,7 +20,16 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-log = "2"
+log = "0.4"
+rayon = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 dirs = "6.0.0"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp", "gif", "bmp"] }
+base64 = "0.22"
+
+[profile.dev]
+opt-level = 2      # compile faster than release but run much faster than debug
 
