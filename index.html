@@ -1,6 +1,5 @@
 <!doctype html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <link rel="stylesheet" href="/src/styles.css" />
@@ -8,21 +7,37 @@
   <title>Wallpaper</title>
   <script type="module" src="/src/main.ts" defer></script>
 </head>
-
 <body>
-  <header class="toolbar">
-    <button id="pick-dir">Choose directory</button>
-    <select id="sort-by">
-      <option value="name">Name A→Z</option>
-      <option value="name_desc">Name Z→A</option>
-      <option value="date">Date (newest)</option>
-      <option value="date_old">Date (oldest)</option>
-      <option value="size">Size (largest)</option>
-      <option value="size_asc">Size (smallest)</option>
-    </select>
-    <span id="current-dir" class="dir-label"></span>
-  </header>
-  <div id="grid" class="grid"></div>
+  <div class="app">
+    <header class="titlebar" data-tauri-drag-region>
+      <div class="title-left" data-tauri-drag-region>
+        <div class="app-dot"></div>
+        <span class="app-name" data-tauri-drag-region>Wallpaper</span>
+      </div>
+      <div class="title-controls">
+        <span id="current-dir" class="dir-label"></span>
+        <select id="sort-by">
+          <option value="name">A → Z</option>
+          <option value="name_desc">Z → A</option>
+          <option value="date">Newest</option>
+          <option value="date_old">Oldest</option>
+          <option value="size">Largest</option>
+          <option value="size_asc">Smallest</option>
+        </select>
+        <button id="pick-dir" class="icon-btn" title="Choose folder">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+        </button>
+        <button id="win-close" class="icon-btn close-btn" title="Close">
+          <svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <line x1="1" y1="1" x2="9" y2="9"/>
+            <line x1="9" y1="1" x2="1" y2="9"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+    <div id="grid" class="grid"></div>
+  </div>
 </body>
-
 </html>

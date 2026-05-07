@@ -1,13 +1,18 @@
 mod commands;
+mod config;
 mod scanner;
 mod test;
 pub mod thumbnail;
 mod types;
 
+use std::sync::Mutex;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     test::bench_if_requested();
     std::thread::spawn(thumbnail::cleanup);
+
+    let cfg = config::load();
 
     tauri::Builder::default()
         .plugin(
@@ -37,9 +42,12 @@ pub fn run() {
         )
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .manage(Mutex::new(cfg))
         .invoke_handler(tauri::generate_handler![
             commands::start_load_images,
             commands::get_startup_dir,
+            commands::get_config,
+            commands::save_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

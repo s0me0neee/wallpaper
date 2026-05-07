@@ -14,8 +14,13 @@
     "windows": [
       {
         "title": "wallpaper",
-        "width": 800,
-        "height": 600
+        "width": 720,
+        "height": 520,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "resizable": true,
+        "center": true
       }
     ],
     "security": {

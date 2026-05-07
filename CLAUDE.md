@@ -1,45 +1,97 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this repository.
 
 ## Project Overview
 
-A cross-platform desktop wallpaper viewer built with **Tauri v2** (Rust backend + TypeScript/Vite frontend). Uses `pnpm` for frontend package management.
+A cross-platform desktop wallpaper viewer/picker built with **Tauri v2** (Rust backend + TypeScript/Vite frontend). Displays a thumbnail grid from a directory of images. Runs as a small floating window, always on top.
 
 ## Commands
 
 ```bash
 # Development
-pnpm tauri dev        # Run app with hot reload (starts Vite dev server + Rust backend)
+pnpm tauri dev             # hot-reload dev server + Rust backend
+pnpm tauri dev 2>&1        # show Rust log output in terminal
 
 # Build
-pnpm tauri build      # Package the app for distribution
+pnpm tauri build           # release build for distribution
 
 # Frontend only
-pnpm dev              # Vite dev server on port 1420
-pnpm build            # TypeScript compile + Vite bundle
+pnpm dev                   # Vite dev server on port 1420
+pnpm build                 # TypeScript compile + Vite bundle
 
-# Rust backend (run from src-tauri/)
-cargo build
-cargo test
-cargo check
+# Rust (run from src-tauri/)
+cargo check                # fast type-check
+cargo test                 # run unit tests
+cargo bench                # criterion thumbnail benchmarks
+
+# Dev env vars
+TEST=1 pnpm tauri dev      # auto-load ~/Pictures/wallpaper on startup
+BENCH=1 pnpm tauri dev     # run criterion benchmarks and exit (no GUI)
 ```
 
 ## Architecture
 
-The project follows the standard Tauri hybrid architecture:
+Standard Tauri v2 hybrid: Rust backend streams data to a TypeScript frontend via IPC events.
 
-- **`src/`** — Frontend (TypeScript + Vite). `main.ts` is the entry point; calls Rust commands via `invoke()` from `@tauri-apps/api`.
-- **`src-tauri/src/`** — Rust backend. `lib.rs` sets up the Tauri app and command handlers; `fs.rs` contains image file system operations exposed as Tauri commands (`#[tauri::command]`). `main.rs` is just a thin wrapper.
-- **`src-tauri/capabilities/default.json`** — Tauri v2 capability-based permissions for the main window. Any new plugin permissions must be added here.
-- **`src-tauri/tauri.conf.json`** — App config: window size (800×600), dev server port (1420), CSP, bundle targets, and lifecycle hooks (`beforeDevCommand`, `beforeBuildCommand`).
+### Rust — `src-tauri/src/`
+
+| File | Responsibility |
+|------|---------------|
+| `lib.rs` | App entry point — loads config, starts cleanup thread, registers plugins and commands |
+| `config.rs` | Load/save `~/.config/wallpaper/config.json` (dir, sort order, column count) |
+| `commands.rs` | Tauri command handlers exposed to the frontend |
+| `scanner.rs` | Reads a directory, filters image files, sorts by name/date/size |
+| `thumbnail.rs` | Generate JPEG thumbnails (Lanczos3, 1000×600, q92); disk cache in `~/.cache/wallpaper/thumbnails/`; cache cleanup on startup |
+| `types.rs` | Shared serde types: `ImageEntry`, `LoadDone`, `SortBy`, `PostCommand` |
+| `test.rs` | `TEST`/`BENCH` env var handling for dev |
+
+**Thumbnail cache** filenames encode path hash + mtime + dimensions + quality so stale entries are automatically bypassed. `cleanup()` runs on startup in a background thread and evicts: duplicate versions of the same image, entries older than 30 days, and total size over 200 MB.
+
+**Parallelism** — thumbnail generation uses a capped rayon thread pool (`clamp(2, 6)` threads). Rayon is used instead of tokio because decoding is CPU-bound, not I/O-bound.
+
+### TypeScript — `src/`
+
+| File | Responsibility |
+|------|---------------|
+| `main.ts` | Entry point — wires DOM events, loads config, initialises modules |
+| `loader.ts` | Invokes `start_load_images`, listens for `thumbnail` / `load-done` events |
+| `grid.ts` | Renders thumbnails, manages selection state |
+| `zoom.ts` | Column count + row height CSS variables, zoom animations, col-change callback |
+| `keyboard.ts` | hjkl / arrow key navigation, Ctrl+/-  zoom, Esc to close |
+| `types.ts` | TypeScript interfaces mirroring Rust serde types |
 
 ### IPC Pattern
 
-Frontend calls Rust via `invoke('command_name', { args })`. Rust functions annotated with `#[tauri::command]` must be registered in the `generate_handler![]` macro in `lib.rs` to be callable from the frontend.
+- **Commands** (`invoke`): request/response — `start_load_images`, `get_config`, `save_config`, `get_startup_dir`
+- **Events** (`listen`): streaming — `thumbnail` (one per image), `load-done` (final count)
 
-### Key Dependencies
+Commands must be registered in `generate_handler![]` in `lib.rs` **and** listed in `src-tauri/capabilities/default.json`.
 
-- `dirs` (Rust) — cross-platform home/config directory resolution
-- `tauri-plugin-opener` — opening files/URLs on the host OS
-- `serde` / `serde_json` — data serialization across the IPC boundary
+### Config
+
+Persisted at `~/.config/wallpaper/config.toml`:
+```toml
+image_dir = "/home/user/Pictures/wallpaper"
+order = "name"
+number_of_cols = 4
+subdir = false
+```
+Auto-saved whenever the user changes directory, sort order, or column count.
+
+### Key Dependencies (Rust)
+
+| Crate | Purpose |
+|-------|---------|
+| `image 0.25` | Image decode + Lanczos3 resize (jpeg/png/webp/gif/bmp features only) |
+| `rayon` | CPU-parallel thumbnail generation |
+| `base64 0.22` | Encode thumbnail bytes as data URLs for IPC |
+| `dirs` | Cross-platform config/cache/pictures directory paths |
+| `thiserror` | Error types in `config.rs` |
+| `tauri-plugin-dialog` | Native directory picker |
+| `tauri-plugin-log` | Coloured, timestamped terminal logging |
+| `criterion` (dev) | Benchmark harness for `benches/thumbnail_bench.rs` |
+
+### Window
+
+720 × 520, borderless (`decorations: false`), transparent, always on top. Custom titlebar with `data-tauri-drag-region` for dragging. Capabilities: `core:default`, `opener:default`, `dialog:default`, `core:window:allow-close`, `core:window:allow-minimize`.

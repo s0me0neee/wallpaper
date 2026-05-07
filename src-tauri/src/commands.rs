@@ -1,4 +1,5 @@
 use crate::{
+    config,
     scanner,
     test,
     thumbnail,
@@ -8,9 +9,12 @@ use base64::{engine::general_purpose::STANDARD, Engine};
 use rayon::prelude::*;
 use std::{
     path::PathBuf,
-    sync::atomic::{AtomicUsize, Ordering},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Mutex,
+    },
 };
-use tauri::Emitter;
+use tauri::{Emitter, State};
 
 #[tauri::command]
 pub fn start_load_images(
@@ -44,7 +48,7 @@ pub fn start_load_images(
         let skipped = AtomicUsize::new(0);
 
         pool.install(|| {
-            paths.par_iter().for_each(|path| {
+            paths.par_iter().enumerate().for_each(|(index, path)| {
                 let name = path
                     .file_name()
                     .unwrap_or_default()
@@ -56,6 +60,7 @@ pub fn start_load_images(
                         let n = loaded.fetch_add(1, Ordering::Relaxed) + 1;
                         log::debug!("[{n}/{total}] {name}");
                         app.emit("thumbnail", ImageEntry {
+                            index,
                             path: path.to_string_lossy().into_owned(),
                             thumbnail: format!("data:image/jpeg;base64,{}", STANDARD.encode(&buf)),
                         })
@@ -81,4 +86,16 @@ pub fn start_load_images(
 #[tauri::command]
 pub fn get_startup_dir() -> Option<String> {
     test::startup_dir().map(|p| p.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
+pub fn get_config(state: State<Mutex<config::Setting>>) -> config::Setting {
+    state.lock().unwrap().clone()
+}
+
+#[tauri::command]
+pub fn save_config(setting: config::Setting, state: State<Mutex<config::Setting>>) -> Result<(), String> {
+    config::save(&setting).map_err(|e| e.to_string())?;
+    *state.lock().unwrap() = setting;
+    Ok(())
 }

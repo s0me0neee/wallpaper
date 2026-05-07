@@ -31,6 +31,7 @@ export function appendThumb(entry: ImageEntry, selectIt = false): void {
   const grid = document.getElementById("grid")!;
   const item = document.createElement("div");
   item.className = "thumb-item";
+  item.dataset.index = String(entry.index);
 
   const filename = entry.path.split("/").pop() ?? "";
 
@@ -46,7 +47,11 @@ export function appendThumb(entry: ImageEntry, selectIt = false): void {
   item.appendChild(img);
   item.appendChild(label);
   item.addEventListener("click", () => setSelected(getItems().indexOf(item)));
-  grid.appendChild(item);
 
-  if (selectIt) setSelected(getItems().length - 1);
+  // Insert at the correct sorted position rather than appending blindly.
+  const items = getItems();
+  const after = items.find((el) => Number(el.dataset.index) > entry.index) ?? null;
+  grid.insertBefore(item, after);
+
+  if (selectIt) setSelected(0);
 }
