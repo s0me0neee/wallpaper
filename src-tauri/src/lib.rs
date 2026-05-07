@@ -7,9 +7,30 @@ pub mod thumbnail;
 mod types;
 
 use plugins::mac_rounded_corners;
+use tauri_plugin_cli::CliExt;
 
 use std::sync::Mutex;
 use tauri::Manager;
+
+fn verbosity_level() -> log::LevelFilter {
+    let args: Vec<String> = std::env::args().collect();
+    if args[1..].iter().any(|a| a == "-q" || a == "--quiet") {
+        return log::LevelFilter::Error;
+    }
+    let mut v = 0usize;
+    for a in &args[1..] {
+        if a == "--verbose" {
+            v += 1;
+        } else if let Some(flags) = a.strip_prefix('-').filter(|s| !s.starts_with('-')) {
+            v += flags.chars().filter(|c| *c == 'v').count();
+        }
+    }
+    match v {
+        0 => log::LevelFilter::Info,
+        1 => log::LevelFilter::Debug,
+        _ => log::LevelFilter::Trace,
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -17,11 +38,12 @@ pub fn run() {
     std::thread::spawn(thumbnail::cleanup);
 
     let cfg = config::load();
+    let level = verbosity_level();
 
     tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::new()
-                .level(log::LevelFilter::Debug)
+                .level(level)
                 .format(|out, message, record| {
                     let level = match record.level() {
                         log::Level::Error => "\x1b[31;1mERROR\x1b[0m",
@@ -44,11 +66,29 @@ pub fn run() {
                 })
                 .build(),
         )
+        .plugin(tauri_plugin_cli::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .manage(Mutex::new(cfg))
         .setup(|app| {
+            // --- CLI mode: `wall <image>` ---
+            if let Ok(matches) = app.cli().matches() {
+                if let Some(arg) = matches.args.get("image") {
+                    if let serde_json::Value::String(path) = &arg.value {
+                        match wp::set_from_path(path) {
+                            Ok(_) => log::info!("wallpaper set → {path}"),
+                            Err(e) => {
+                                log::error!("failed to set wallpaper: {e}");
+                                std::process::exit(1);
+                            }
+                        }
+                        std::process::exit(0);
+                    }
+                }
+            }
+
+            // --- GUI mode ---
             let cfg = app.state::<Mutex<config::Setting>>().lock().unwrap().clone();
             if let Some(win) = app.get_webview_window("main") {
                 let _ = win.set_size(tauri::Size::Logical(tauri::LogicalSize {
