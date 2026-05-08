@@ -40,7 +40,7 @@ Standard Tauri v2 hybrid: Rust backend streams data to a TypeScript frontend via
 
 | File | Responsibility |
 |------|---------------|
-| `lib.rs` | App entry point — pre-parses verbosity flags, loads config, starts cleanup thread, registers plugins and commands; detects CLI mode in `setup` and exits early if an image path was passed |
+| `lib.rs` | App entry point — `check_early_flags()` handles `--help`/`--version` before Tauri starts; pre-parses verbosity flags, loads config, starts cleanup thread, registers plugins and commands; detects CLI mode in `setup` and exits early if an image path was passed |
 | `config.rs` | Load/save `~/.config/wallpaper/config.toml` (macOS falls back to `~/Library/Application Support` if `~/.config` doesn't exist) |
 | `commands.rs` | Tauri command handlers exposed to the frontend; `set_wallpaper` also runs post-commands and `${{notify}}` directives |
 | `scanner.rs` | Reads a directory, filters image files, sorts by name/date/size |
@@ -48,13 +48,15 @@ Standard Tauri v2 hybrid: Rust backend streams data to a TypeScript frontend via
 | `types.rs` | Shared serde types: `ImageEntry`, `LoadDone`, `SortBy`, `PostCommand` |
 | `test.rs` | `TEST`/`BENCH` env var handling for dev |
 
-**CLI mode** — `verbosity_level()` in `lib.rs` counts `-v`/`--verbose` occurrences in `std::env::args()` before the Tauri builder runs so the log level is set correctly. In the `setup` callback, `app.cli().matches()` is called; if an `image` arg is present, `wp::set_from_path` is called and the process exits — the window never appears.
+**CLI mode** — `check_early_flags()` in `lib.rs` handles `-h`/`--help` and `-V`/`--version` by printing and exiting before the Tauri builder runs — no window flash. `verbosity_level()` then counts `-v`/`--verbose` occurrences. In the `setup` callback, `app.cli().matches()` is called; if an `image` arg is present, `wp::set_from_path` is called and the process exits — the window never appears.
+
+On macOS the app bundle binary is at `/Applications/wall.app/Contents/MacOS/wallpaper`. Symlink it to use `wall` as a shell command (the system `wall` utility at `/usr/bin/wall` would otherwise take precedence).
 
 **Thumbnail cache** filenames encode path hash + mtime + dimensions + quality so stale entries are automatically bypassed. `cleanup()` runs on startup in a background thread and evicts: duplicate versions of the same image, entries older than 30 days, and total size over 200 MB.
 
 **Parallelism** — thumbnail generation uses a capped rayon thread pool (`clamp(2, 6)` threads). Rayon is used instead of tokio because decoding is CPU-bound, not I/O-bound.
 
-**Post-commands** — after setting a wallpaper, `commands::set_wallpaper` spawns a thread that runs each entry in `post_command.cmds`. `${{wallpaper}}` is substituted with the image path. `${{notify 'message'}}` sends a native notification via `tauri-plugin-notification` (no shell spawned). Other commands run via `duct` with `$SHELL -l -c` on Unix.
+**Post-commands** — after setting a wallpaper, `commands::set_wallpaper` spawns a thread that runs each entry in `post_command.cmds`. `${{wallpaper}}` is substituted with the image path. `${{notify 'message'}}` sends a native notification via `tauri-plugin-notification` (no shell spawned). Other commands run via `duct` with `$SHELL -l -i -c` on Unix — login+interactive so both `~/.zprofile` and `~/.zshrc` are sourced, making user-installed tools (pyenv, pip, etc.) available.
 
 ### TypeScript — `src/`
 
@@ -81,6 +83,8 @@ The CLI schema is defined in `tauri.conf.json` under `plugins.cli`:
 - Positional arg `image` (index 1, optional) — image path to set as wallpaper
 - Flag `-v` / `--verbose` (multi-occurrence) — increases log verbosity; one occurrence → debug, two or more → trace
 - Flag `-q` / `--quiet` — suppresses output (error level only)
+
+`-h`/`--help` and `-V`/`--version` are handled by `check_early_flags()` before the Tauri plugin sees the args — they are not declared in the `tauri.conf.json` schema.
 
 ### Config
 

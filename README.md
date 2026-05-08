@@ -28,7 +28,15 @@ Download the latest release for your platform from the [Releases](../../releases
 wall /path/to/image.jpg     # set wallpaper, no GUI
 wall -v /path/to/image.jpg  # verbose (debug) logging
 wall -q /path/to/image.jpg  # quiet (errors only)
+wall --help                 # print usage
+wall --version              # print version
 wall                        # open the GUI picker
+```
+
+On macOS the binary lives inside the app bundle. To use it as a command, symlink it:
+
+```bash
+ln -sf /Applications/wall.app/Contents/MacOS/wallpaper ~/.local/bin/wall
 ```
 
 ## Requirements
@@ -60,7 +68,7 @@ BENCH=1 pnpm tauri dev   # run thumbnail benchmarks and exit
 pnpm tauri build
 ```
 
-The release binary is placed in `src-tauri/target/release/` as `wall`. Releases for all platforms are built automatically via GitHub Actions on every `v*` tag.
+The release binary is placed in `src-tauri/target/release/` as `wall`. Releases for all platforms are built and published automatically via GitHub Actions on every `v*` tag push.
 
 ## Benchmarks
 
