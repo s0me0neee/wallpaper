@@ -12,6 +12,36 @@ use tauri_plugin_cli::CliExt;
 use std::sync::Mutex;
 use tauri::Manager;
 
+fn check_early_flags() {
+    let args: Vec<String> = std::env::args().collect();
+    let has = |flags: &[&str]| args[1..].iter().any(|a| flags.contains(&a.as_str()));
+
+    if has(&["-h", "--help"]) {
+        print!(concat!(
+            "wall ", env!("CARGO_PKG_VERSION"), "\n",
+            "Floating wallpaper picker and CLI setter\n",
+            "\n",
+            "USAGE:\n",
+            "    wall [OPTIONS] [IMAGE]\n",
+            "\n",
+            "ARGS:\n",
+            "    <IMAGE>    Path to image to set as wallpaper\n",
+            "\n",
+            "OPTIONS:\n",
+            "    -h, --help       Print this help\n",
+            "    -V, --version    Print version\n",
+            "    -v, --verbose    Increase log verbosity (-v debug, -vv trace)\n",
+            "    -q, --quiet      Suppress all output\n",
+        ));
+        std::process::exit(0);
+    }
+
+    if has(&["-V", "--version"]) {
+        println!("wall {}", env!("CARGO_PKG_VERSION"));
+        std::process::exit(0);
+    }
+}
+
 fn verbosity_level() -> log::LevelFilter {
     let args: Vec<String> = std::env::args().collect();
     if args[1..].iter().any(|a| a == "-q" || a == "--quiet") {
@@ -40,6 +70,7 @@ fn verbosity_level() -> log::LevelFilter {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    check_early_flags();
     test::bench_if_requested();
     std::thread::spawn(thumbnail::cleanup);
 
