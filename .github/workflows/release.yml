@@ -64,6 +64,6 @@ jobs:
             - **macOS** — `.dmg` (arm64 or x86_64)
             - **Linux** — `.deb` / `.AppImage` / `.rpm`
             - **Windows** — `.msi` / `.exe` (NSIS)
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
