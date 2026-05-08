@@ -189,9 +189,18 @@ pub fn set_wallpaper(path: String, state: State<Mutex<config::Setting>>, app: ta
                 };
 
                 match expr.stderr_to_stdout().read() {
-                    Ok(out) if out.trim().is_empty() => log::info!("{POSTCMD} [{n}] done"),
-                    Ok(out) => log::info!("{POSTCMD} [{n}] output:\n{out}"),
-                    Err(e)  => log::warn!("{POSTCMD} [{n}] error: {e}"),
+                    Ok(out) => {
+                        let out: String = out.lines()
+                            .filter(|l| !l.contains("can't change option: zle"))
+                            .collect::<Vec<_>>()
+                            .join("\n");
+                        if out.trim().is_empty() {
+                            log::info!("{POSTCMD} [{n}] done");
+                        } else {
+                            log::info!("{POSTCMD} [{n}] output:\n{out}");
+                        }
+                    }
+                    Err(e) => log::warn!("{POSTCMD} [{n}] error: {e}"),
                 }
             }
         });
