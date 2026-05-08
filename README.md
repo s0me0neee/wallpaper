@@ -14,12 +14,19 @@ A lightweight floating wallpaper picker built with [Tauri v2](https://tauri.app)
 - CLI mode — set a wallpaper from the terminal without opening the GUI
 - Esc or ✕ to close
 
+## Platform Support
+
+> **Linux users:** this app is not recommended on Linux. The `wallpaper` crate it relies on has limited backend support and may not work correctly across display servers and desktop environments. Use a dedicated tool instead:
+> - [waypaper](https://github.com/anufrievroman/waypaper) — GUI frontend for Wayland backends (swww, swaybg, hyprpaper, etc.)
+> - [swww](https://github.com/LGFae/swww), [hyprpaper](https://github.com/hyprwm/hyprpaper), [swaybg](https://github.com/swaywm/swaybg) — Wayland-native setters
+> - [feh](https://feh.finalrewind.org), [nitrogen](https://github.com/l3ib/nitrogen) — X11 setters
+
 ## Install
 
 Download the latest release for your platform from the [Releases](../../releases) page:
 
 - **macOS** — `.dmg` (arm64 or x86_64)
-- **Linux** — `.deb` / `.AppImage`
+- **Linux** — `.deb` / `.AppImage` (not recommended — see above)
 - **Windows** — `.msi` / `.exe`
 
 ## CLI
