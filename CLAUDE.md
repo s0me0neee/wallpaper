@@ -2,8 +2,6 @@
 
 This file provides guidance to Claude Code when working with this repository.
 
-Commit after every major change or new feature added.
-
 ## Project Overview
 
 A cross-platform desktop wallpaper viewer/picker built with **Tauri v2** (Rust backend + TypeScript/Vite frontend). Displays a thumbnail grid from a directory of images. Runs as a small floating window, always on top. Also ships a CLI mode: passing an image path as an argument sets the wallpaper and exits without opening the GUI. The executable is named `wall` (`productName` in `tauri.conf.json`).
@@ -38,15 +36,15 @@ Standard Tauri v2 hybrid: Rust backend streams data to a TypeScript frontend via
 
 ### Rust — `src-tauri/src/`
 
-| File | Responsibility |
-|------|---------------|
-| `lib.rs` | App entry point — `check_early_flags()` handles `--help`/`--version` before Tauri starts; pre-parses verbosity flags, loads config, starts cleanup thread, registers plugins and commands; detects CLI mode in `setup` and exits early if an image path was passed |
-| `config.rs` | Load/save `~/.config/wallpaper/config.toml` (macOS falls back to `~/Library/Application Support` if `~/.config` doesn't exist) |
-| `commands.rs` | Tauri command handlers exposed to the frontend; `set_wallpaper` also runs post-commands and `${{notify}}` directives |
-| `scanner.rs` | Reads a directory, filters image files, sorts by name/date/size |
-| `thumbnail.rs` | Generate JPEG thumbnails (Lanczos3, 1000×600, q92); disk cache in `~/.cache/wallpaper/thumbnails/`; cache cleanup on startup |
-| `types.rs` | Shared serde types: `ImageEntry`, `LoadDone`, `SortBy`, `PostCommand` |
-| `test.rs` | `TEST`/`BENCH` env var handling for dev |
+| File           | Responsibility                                                                                                                                                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `lib.rs`       | App entry point — `check_early_flags()` handles `--help`/`--version` before Tauri starts; pre-parses verbosity flags, loads config, starts cleanup thread, registers plugins and commands; detects CLI mode in `setup` and exits early if an image path was passed |
+| `config.rs`    | Load/save `~/.config/wallpaper/config.toml` (macOS falls back to `~/Library/Application Support` if `~/.config` doesn't exist)                                                                                                                                     |
+| `commands.rs`  | Tauri command handlers exposed to the frontend; `set_wallpaper` also runs post-commands and `${{notify}}` directives                                                                                                                                               |
+| `scanner.rs`   | Reads a directory, filters image files, sorts by name/date/size                                                                                                                                                                                                    |
+| `thumbnail.rs` | Generate JPEG thumbnails (Lanczos3, 1000×600, q92); disk cache in `~/.cache/wallpaper/thumbnails/`; cache cleanup on startup                                                                                                                                       |
+| `types.rs`     | Shared serde types: `ImageEntry`, `LoadDone`, `SortBy`, `PostCommand`                                                                                                                                                                                              |
+| `test.rs`      | `TEST`/`BENCH` env var handling for dev                                                                                                                                                                                                                            |
 
 **CLI mode** — `check_early_flags()` in `lib.rs` handles `-h`/`--help` and `-V`/`--version` by printing and exiting before the Tauri builder runs — no window flash. `verbosity_level()` then counts `-v`/`--verbose` occurrences. In the `setup` callback, `app.cli().matches()` is called; if an `image` arg is present, `wp::set_from_path` is called and the process exits — the window never appears.
 
@@ -60,14 +58,14 @@ On macOS the app bundle binary is at `/Applications/wall.app/Contents/MacOS/wall
 
 ### TypeScript — `src/`
 
-| File | Responsibility |
-|------|---------------|
-| `main.ts` | Entry point — wires DOM events, loads config, initialises modules |
-| `loader.ts` | Invokes `start_load_images`, listens for `thumbnail` / `load-done` events |
-| `grid.ts` | Renders thumbnails, manages selection state |
-| `zoom.ts` | Column count + row height CSS variables, zoom animations, col-change callback |
-| `keyboard.ts` | hjkl / arrow key navigation, Ctrl+/- zoom, Esc to close |
-| `types.ts` | TypeScript interfaces mirroring Rust serde types |
+| File          | Responsibility                                                                |
+| ------------- | ----------------------------------------------------------------------------- |
+| `main.ts`     | Entry point — wires DOM events, loads config, initialises modules             |
+| `loader.ts`   | Invokes `start_load_images`, listens for `thumbnail` / `load-done` events     |
+| `grid.ts`     | Renders thumbnails, manages selection state                                   |
+| `zoom.ts`     | Column count + row height CSS variables, zoom animations, col-change callback |
+| `keyboard.ts` | hjkl / arrow key navigation, Ctrl+/- zoom, Esc to close                       |
+| `types.ts`    | TypeScript interfaces mirroring Rust serde types                              |
 
 ### IPC Pattern
 
@@ -104,20 +102,20 @@ Auto-saved whenever the user changes directory, sort order, or column count.
 
 ### Key Dependencies (Rust)
 
-| Crate | Purpose |
-|-------|---------|
-| `image 0.25` | Image decode + Lanczos3 resize (jpeg/png/webp/gif/bmp features only) |
-| `rayon` | CPU-parallel thumbnail generation |
-| `base64 0.22` | Encode thumbnail bytes as data URLs for IPC |
-| `dirs` | Cross-platform config/cache/pictures directory paths |
-| `thiserror` | Error types in `config.rs` |
-| `duct` | Shell command execution for post-commands |
-| `wp` (`wallpaper` crate v3) | Set the desktop wallpaper |
-| `tauri-plugin-cli` | CLI argument parsing; schema in `tauri.conf.json` |
-| `tauri-plugin-dialog` | Native directory picker |
-| `tauri-plugin-log` | Coloured, timestamped terminal logging |
-| `tauri-plugin-notification` | Native OS notifications for `${{notify}}` post-command directive |
-| `criterion` (dev) | Benchmark harness for `benches/thumbnail_bench.rs` |
+| Crate                       | Purpose                                                              |
+| --------------------------- | -------------------------------------------------------------------- |
+| `image 0.25`                | Image decode + Lanczos3 resize (jpeg/png/webp/gif/bmp features only) |
+| `rayon`                     | CPU-parallel thumbnail generation                                    |
+| `base64 0.22`               | Encode thumbnail bytes as data URLs for IPC                          |
+| `dirs`                      | Cross-platform config/cache/pictures directory paths                 |
+| `thiserror`                 | Error types in `config.rs`                                           |
+| `duct`                      | Shell command execution for post-commands                            |
+| `wp` (`wallpaper` crate v3) | Set the desktop wallpaper                                            |
+| `tauri-plugin-cli`          | CLI argument parsing; schema in `tauri.conf.json`                    |
+| `tauri-plugin-dialog`       | Native directory picker                                              |
+| `tauri-plugin-log`          | Coloured, timestamped terminal logging                               |
+| `tauri-plugin-notification` | Native OS notifications for `${{notify}}` post-command directive     |
+| `criterion` (dev)           | Benchmark harness for `benches/thumbnail_bench.rs`                   |
 
 ### Window
 

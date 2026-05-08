@@ -119,6 +119,7 @@ pub fn cleanup() {
     // Pass 3: size eviction — delete oldest until under the limit.
     let mut total: u64 = entries.iter().map(|e| e.size).sum();
     let limit = MAX_CACHE_SIZE_MB * 1024 * 1024;
+    let mut size_evicted = 0usize;
     if total > limit {
         entries.sort_by_key(|e| e.mtime); // oldest first
         for e in &entries {
@@ -126,16 +127,17 @@ pub fn cleanup() {
                 break;
             }
             if std::fs::remove_file(&e.path).is_ok() {
-                total -= e.size;
+                total = total.saturating_sub(e.size);
+                size_evicted += 1;
             }
         }
     }
 
-    let removed = before - entries.len();
+    let removed = (before - entries.len()) + size_evicted;
     if removed > 0 {
         log::info!(
             "Cache cleanup: removed {removed} entries, {} remaining",
-            entries.len()
+            entries.len() - size_evicted.min(entries.len())
         );
     }
 }

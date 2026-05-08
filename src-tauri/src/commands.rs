@@ -71,10 +71,14 @@ pub fn start_load_images(
         .unwrap_or(4);
 
     std::thread::spawn(move || {
-        let pool = rayon::ThreadPoolBuilder::new()
-            .num_threads(threads)
-            .build()
-            .expect("failed to build thread pool");
+        let pool = match rayon::ThreadPoolBuilder::new().num_threads(threads).build() {
+            Ok(p) => p,
+            Err(e) => {
+                log::error!("failed to build thread pool: {e}");
+                app.emit("load-done", LoadDone { loaded: 0, skipped: total }).ok();
+                return;
+            }
+        };
 
         let loaded = AtomicUsize::new(0);
         let skipped = AtomicUsize::new(0);

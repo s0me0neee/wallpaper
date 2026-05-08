@@ -5,6 +5,8 @@ export let cols = 4;
 let _onColsChange: ((n: number) => void) | null = null;
 export function onColsChange(cb: (n: number) => void): void { _onColsChange = cb; }
 
+let _zoomTimer: ReturnType<typeof setTimeout> | null = null;
+
 export function applyColumns(n: number): void {
   const next = Math.max(MIN_COLS, Math.min(MAX_COLS, n));
   if (next === cols) return;
@@ -15,10 +17,11 @@ export function applyColumns(n: number): void {
   document.documentElement.style.setProperty("--row-height", `${Math.round(560 / cols)}px`);
 
   const grid = document.getElementById("grid")!;
+  if (_zoomTimer !== null) clearTimeout(_zoomTimer);
   grid.classList.remove("zoom-in", "zoom-out");
   void grid.offsetWidth; // restart animation
   grid.classList.add(zoomIn ? "zoom-in" : "zoom-out");
-  setTimeout(() => grid.classList.remove("zoom-in", "zoom-out"), 250);
+  _zoomTimer = setTimeout(() => { grid.classList.remove("zoom-in", "zoom-out"); _zoomTimer = null; }, 250);
 
   _onColsChange?.(cols);
 }

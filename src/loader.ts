@@ -39,7 +39,8 @@ export async function loadImages(dir?: string, sort = currentSort): Promise<void
         grid.innerHTML = "";
         if (!dir) {
           const p = e.payload.path;
-          dirLabel.textContent = p.substring(0, p.lastIndexOf("/"));
+          const slash = p.lastIndexOf("/");
+          dirLabel.textContent = slash > 0 ? p.substring(0, slash) : p;
         }
         first = false;
       }
