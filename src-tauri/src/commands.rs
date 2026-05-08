@@ -172,7 +172,7 @@ pub fn set_wallpaper(path: String, state: State<Mutex<config::Setting>>, app: ta
 
                 let expr = {
                     #[cfg(unix)]
-                    { duct::cmd!(&shell, "-l", "-c", &cmd_str).stdin_null() }
+                    { duct::cmd!(&shell, "-l", "-i", "-c", &cmd_str).stdin_null() }
                     #[cfg(not(unix))]
                     { duct::cmd!("cmd", "/C", &cmd_str).stdin_null() }
                 };
