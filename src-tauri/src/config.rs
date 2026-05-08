@@ -18,6 +18,8 @@ pub struct Setting {
     pub window_height: u32,
     #[serde(default)]
     pub post_command: types::PostCommand,
+    #[serde(default)]
+    pub skip_set_wallpaper: bool,
 }
 
 fn default_cols() -> u16 {
@@ -40,6 +42,7 @@ impl Default for Setting {
             window_width: default_win_w(),
             window_height: default_win_h(),
             post_command: types::PostCommand::default(),
+            skip_set_wallpaper: false,
         }
     }
 }

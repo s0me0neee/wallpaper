@@ -143,9 +143,16 @@ fn parse_notify(cmd: &str) -> Option<&str> {
 
 #[tauri::command]
 pub fn set_wallpaper(path: String, state: State<Mutex<config::Setting>>, app: tauri::AppHandle) -> Result<(), String> {
-    wp::set_from_path(&path).map_err(|e| e.to_string())?;
+    let (cmds, skip) = {
+        let s = state.lock().unwrap();
+        (s.post_command.cmds.clone(), s.skip_set_wallpaper)
+    };
 
-    let cmds = state.lock().unwrap().post_command.cmds.clone();
+    if skip {
+        log::info!("skip_set_wallpaper=true — skipping wp::set_from_path");
+    } else {
+        wp::set_from_path(&path).map_err(|e| e.to_string())?;
+    }
     if !cmds.is_empty() {
         std::thread::spawn(move || {
             #[cfg(unix)]

@@ -10,6 +10,7 @@ export interface AppConfig {
   window_width: number;
   window_height: number;
   post_command: PostCommand;
+  skip_set_wallpaper: boolean;
 }
 
 export interface ImageEntry {

@@ -11,6 +11,7 @@ import type { AppConfig } from "./types";
 let appConfig: AppConfig = {
   image_dir: null, order: "name", number_of_cols: 4, subdir: false,
   window_width: 720, window_height: 520, post_command: { cmds: [] },
+  skip_set_wallpaper: false,
 };
 
 function saveConfig(): void {
@@ -28,10 +29,11 @@ async function pickDirectory(): Promise<void> {
 }
 
 function initSettings(): void {
-  const panel   = document.getElementById("settings-panel")!;
-  const btn     = document.getElementById("settings-btn")!;
-  const wInput  = document.getElementById("win-width")  as HTMLInputElement;
-  const hInput  = document.getElementById("win-height") as HTMLInputElement;
+  const panel      = document.getElementById("settings-panel")!;
+  const btn        = document.getElementById("settings-btn")!;
+  const wInput     = document.getElementById("win-width")  as HTMLInputElement;
+  const hInput     = document.getElementById("win-height") as HTMLInputElement;
+  const skipToggle = document.getElementById("skip-set-wallpaper") as HTMLInputElement;
 
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -58,6 +60,11 @@ function initSettings(): void {
 
   wInput.addEventListener("change", applySize);
   hInput.addEventListener("change", applySize);
+
+  skipToggle.addEventListener("change", () => {
+    appConfig.skip_set_wallpaper = skipToggle.checked;
+    saveConfig();
+  });
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
@@ -114,6 +121,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   sortEl.value = appConfig.order;
   (document.getElementById("win-width")  as HTMLInputElement).value = String(appConfig.window_width);
   (document.getElementById("win-height") as HTMLInputElement).value = String(appConfig.window_height);
+  (document.getElementById("skip-set-wallpaper") as HTMLInputElement).checked = appConfig.skip_set_wallpaper;
 
   // Blur any form control that may have grabbed focus during config load
   (document.activeElement as HTMLElement | null)?.blur();
