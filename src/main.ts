@@ -47,19 +47,33 @@ function initSettings(): void {
     }
   });
 
+  let _sizeTimer: ReturnType<typeof setTimeout> | null = null;
+
   async function applySize(): Promise<void> {
     const w = Math.max(400, Math.min(2400, Number(wInput.value)));
     const h = Math.max(300, Math.min(1600, Number(hInput.value)));
     appConfig.window_width  = w;
     appConfig.window_height = h;
+    saveConfig();
     const win = getCurrentWindow();
     await win.setSize(new LogicalSize(w, h));
     await win.center();
-    saveConfig();
   }
 
-  wInput.addEventListener("change", applySize);
-  hInput.addEventListener("change", applySize);
+  function scheduleSize(): void {
+    if (_sizeTimer !== null) clearTimeout(_sizeTimer);
+    _sizeTimer = setTimeout(() => { _sizeTimer = null; applySize(); }, 150);
+  }
+
+  function flushSize(): void {
+    if (_sizeTimer !== null) { clearTimeout(_sizeTimer); _sizeTimer = null; }
+    applySize();
+  }
+
+  wInput.addEventListener("input", scheduleSize);
+  hInput.addEventListener("input", scheduleSize);
+  wInput.addEventListener("change", flushSize);
+  hInput.addEventListener("change", flushSize);
 
   skipToggle.addEventListener("change", () => {
     appConfig.skip_set_wallpaper = skipToggle.checked;
