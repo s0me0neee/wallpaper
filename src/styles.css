@@ -7,15 +7,19 @@
 :root {
 	--cols: 4;
 	--row-height: 150px;
-	--bg: #111111;
-	--surface: #191919;
-	--surface2: #212121;
-	--border: rgba(255, 255, 255, 0.07);
+	--bg: #0e0e10;
+	--surface: #141416;
+	--surface2: #1c1c1f;
+	--surface3: #242428;
+	--border: rgba(255, 255, 255, 0.055);
+	--border-focus: rgba(91, 142, 240, 0.45);
 	--accent: #5b8ef0;
-	--accent-glow: rgba(91, 142, 240, 0.2);
-	--text: #c8c8c8;
-	--text-dim: #4a4a4a;
+	--accent-dim: rgba(91, 142, 240, 0.15);
+	--accent-glow: rgba(91, 142, 240, 0.28);
+	--text: #bebecb;
+	--text-dim: #42424e;
 	--radius: 12px;
+	--radius-sm: 8px;
 }
 
 html,
@@ -29,15 +33,22 @@ body {
 	font-family: Inter, system-ui, sans-serif;
 	color: var(--text);
 	padding: 0;
+	-webkit-font-smoothing: antialiased;
 }
 
 /* ── app entrance ── */
 @keyframes app-enter {
-	from { opacity: 0; transform: scale(0.97) translateY(6px); }
-	to   { opacity: 1; transform: scale(1)    translateY(0);   }
+	from {
+		opacity: 0;
+		transform: scale(0.95) translateY(10px);
+	}
+
+	to {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
 }
 
-/* ── outer container ── */
 .app {
 	height: 100vh;
 	display: flex;
@@ -46,12 +57,15 @@ body {
 	border-radius: var(--radius);
 	border: 1px solid var(--border);
 	overflow: hidden;
-	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7), 0 4px 16px rgba(0, 0, 0, 0.5);
-	animation: app-enter 0.35s cubic-bezier(0.34, 1.1, 0.64, 1) both;
+	box-shadow:
+		0 36px 90px rgba(0, 0, 0, 0.8),
+		0 6px 20px rgba(0, 0, 0, 0.5),
+		inset 0 1px 0 rgba(255, 255, 255, 0.035);
+	animation: app-enter 0.42s cubic-bezier(0.34, 1.06, 0.64, 1) both;
 }
 
 html.macos .titlebar {
-	padding-left: 78px;
+	padding-left: 70px;
 }
 
 /* ── titlebar ── */
@@ -76,24 +90,31 @@ html.macos .titlebar {
 }
 
 @keyframes dot-breathe {
-	0%, 100% { box-shadow: 0 0 5px var(--accent); opacity: 1; }
-	50%       { box-shadow: 0 0 12px var(--accent), 0 0 24px rgba(91, 142, 240, 0.25); opacity: 0.75; }
+	0%, 100% {
+		box-shadow: 0 0 5px var(--accent);
+		opacity: 1;
+	}
+
+	50% {
+		box-shadow: 0 0 16px var(--accent), 0 0 32px rgba(91, 142, 240, 0.18);
+		opacity: 0.65;
+	}
 }
 
 .app-dot {
-	width: 8px;
-	height: 8px;
+	width: 7px;
+	height: 7px;
 	border-radius: 50%;
 	background: var(--accent);
 	flex-shrink: 0;
 	box-shadow: 0 0 6px var(--accent);
-	animation: dot-breathe 3s ease-in-out infinite;
+	animation: dot-breathe 3.5s ease-in-out infinite;
 }
 
 .app-name {
-	font-size: 0.7rem;
+	font-size: 0.67rem;
 	font-weight: 600;
-	letter-spacing: 0.1em;
+	letter-spacing: 0.13em;
 	text-transform: uppercase;
 	color: var(--text-dim);
 	white-space: nowrap;
@@ -107,7 +128,7 @@ html.macos .titlebar {
 }
 
 .dir-label {
-	font-size: 0.68rem;
+	font-size: 0.67rem;
 	color: var(--text-dim);
 	max-width: 180px;
 	overflow: hidden;
@@ -123,14 +144,14 @@ html.macos .titlebar {
 	color: var(--text);
 	border-radius: 6px;
 	cursor: pointer;
-	transition: border-color 0.15s, background 0.15s, transform 0.1s;
+	transition: border-color 0.18s, background 0.18s, box-shadow 0.18s, transform 0.12s;
 }
 
 .titlebar select {
 	padding: 3px 20px 3px 8px;
 	font-size: 0.72rem;
 	appearance: none;
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23555'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23505060'/%3E%3C/svg%3E");
 	background-repeat: no-repeat;
 	background-position: right 6px center;
 	height: 26px;
@@ -138,7 +159,8 @@ html.macos .titlebar {
 
 .titlebar select:hover,
 .titlebar select:focus {
-	border-color: var(--accent);
+	border-color: var(--border-focus);
+	box-shadow: 0 0 0 2px var(--accent-dim);
 	outline: none;
 }
 
@@ -153,21 +175,24 @@ html.macos .titlebar {
 }
 
 .icon-btn:hover {
-	border-color: var(--accent);
-	background: var(--accent-glow);
+	border-color: var(--border-focus);
+	background: var(--accent-dim);
+	box-shadow: 0 0 0 2px var(--accent-dim);
 }
 
 .icon-btn:active {
-	transform: scale(0.85);
+	transform: scale(0.80);
+	transition-duration: 0.08s;
 }
 
 .close-btn:hover {
-	border-color: #e05555;
-	background: rgba(220, 60, 60, 0.15);
+	border-color: rgba(224, 85, 85, 0.5);
+	background: rgba(220, 60, 60, 0.1);
 	color: #e05555;
+	box-shadow: 0 0 0 2px rgba(220, 60, 60, 0.1);
 }
 
-/* ── settings panel — slide animation ── */
+/* ── settings panel ── */
 .settings-panel {
 	display: flex;
 	align-items: center;
@@ -179,9 +204,10 @@ html.macos .titlebar {
 	overflow: hidden;
 	max-height: 52px;
 	opacity: 1;
-	transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-	            opacity     0.2s  ease,
-	            padding     0.25s cubic-bezier(0.4, 0, 0.2, 1);
+	transition:
+		max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+		opacity 0.22s ease,
+		padding 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .settings-panel.hidden {
@@ -211,89 +237,196 @@ html.macos .titlebar {
 	font-size: 0.72rem;
 	text-align: right;
 	appearance: textfield;
-	transition: border-color 0.15s;
+	transition: border-color 0.18s, box-shadow 0.18s;
 }
 
 .setting-row input[type="number"]:hover,
 .setting-row input[type="number"]:focus {
-	border-color: var(--accent);
+	border-color: var(--border-focus);
+	box-shadow: 0 0 0 2px var(--accent-dim);
 	outline: none;
 }
 
-/* ── grid ── */
+/* ── grid zoom animations ── */
 @keyframes zoom-in {
-	from { transform: scale(0.96); opacity: 0.5; }
-	to   { transform: scale(1);    opacity: 1; }
+	from {
+		transform: scale(0.94);
+		opacity: 0.35;
+	}
+
+	to {
+		transform: scale(1);
+		opacity: 1;
+	}
 }
 
 @keyframes zoom-out {
-	from { transform: scale(1.04); opacity: 0.5; }
-	to   { transform: scale(1);    opacity: 1; }
+	from {
+		transform: scale(1.06);
+		opacity: 0.35;
+	}
+
+	to {
+		transform: scale(1);
+		opacity: 1;
+	}
 }
 
 @keyframes reorder-out {
-	from { opacity: 1; transform: scale(1) translateY(0); }
-	to   { opacity: 0; transform: scale(0.97) translateY(-6px); }
+	from {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+
+	to {
+		opacity: 0;
+		transform: translateY(-10px) scale(0.97);
+	}
 }
 
+/* ── thumbnail entrance ── */
 @keyframes thumb-in {
-	from { opacity: 0; transform: scale(0.88) translateY(6px); }
-	to   { opacity: 1; transform: scale(1)    translateY(0); }
+	from {
+		opacity: 0;
+		transform: scale(0.84) translateY(10px);
+	}
+
+	to {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
 }
 
+/* ── selected badge pop-in ── */
+@keyframes badge-pop {
+	0% {
+		transform: scale(0) rotate(-30deg);
+		opacity: 0;
+	}
+
+	60% {
+		transform: scale(1.25) rotate(6deg);
+		opacity: 1;
+	}
+
+	100% {
+		transform: scale(1) rotate(0deg);
+		opacity: 1;
+	}
+}
+
+/* ── selected glow pulse ── */
+@keyframes selected-glow {
+	0%, 100% {
+		box-shadow:
+			0 0 0 1.5px var(--accent),
+			0 0 10px rgba(91, 142, 240, 0.18),
+			0 6px 20px rgba(0, 0, 0, 0.45);
+	}
+
+	50% {
+		box-shadow:
+			0 0 0 2px var(--accent),
+			0 0 22px rgba(91, 142, 240, 0.32),
+			0 8px 24px rgba(0, 0, 0, 0.5);
+	}
+}
+
+/* ── applied flash ── */
+@keyframes applied-flash {
+	0% {
+		opacity: 0;
+		transform: scale(0.88);
+	}
+
+	18% {
+		opacity: 1;
+		transform: scale(1.02);
+	}
+
+	62% {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	100% {
+		opacity: 0;
+		transform: scale(1.06);
+	}
+}
+
+/* ── status messages ── */
+@keyframes status-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* ── grid ── */
 .grid {
 	flex: 1;
 	overflow-y: auto;
 	display: grid;
 	grid-template-columns: repeat(var(--cols), 1fr);
 	grid-auto-rows: var(--row-height);
-	gap: 6px;
+	gap: 7px;
 	padding: 8px;
 	align-content: start;
 	transform-origin: center top;
 	will-change: transform;
 	scrollbar-width: thin;
-	scrollbar-color: #2a2a2a transparent;
+	scrollbar-color: #2a2a32 transparent;
 }
 
-.grid.zoom-in    { animation: zoom-in     0.22s cubic-bezier(0.34, 1.3, 0.64, 1) forwards; }
-.grid.zoom-out   { animation: zoom-out    0.22s cubic-bezier(0.34, 1.3, 0.64, 1) forwards; }
+.grid.zoom-in {
+	animation: zoom-in 0.24s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+}
+
+.grid.zoom-out {
+	animation: zoom-out 0.24s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+}
+
 .grid.reorder-out {
-	animation: reorder-out 0.14s ease forwards;
+	animation: reorder-out 0.16s ease forwards;
 	pointer-events: none;
 }
 
 /* ── thumbnails ── */
-@keyframes selected-pulse {
-	0%, 100% { box-shadow: 0 0 0 2px rgba(91, 142, 240, 0.22); }
-	50%       { box-shadow: 0 0 0 3px rgba(91, 142, 240, 0.45), 0 0 18px rgba(91, 142, 240, 0.15); }
-}
-
 .thumb-item {
 	position: relative;
 	overflow: hidden;
-	border-radius: 7px;
+	border-radius: var(--radius-sm);
 	cursor: pointer;
 	border: 1.5px solid transparent;
-	transition: border-color 0.15s,
-	            transform   0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
-	            box-shadow  0.18s;
 	background: var(--surface2);
 	will-change: transform;
-	animation: thumb-in 0.22s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+	animation: thumb-in 0.3s cubic-bezier(0.34, 1.15, 0.64, 1) both;
+	animation-delay: calc(min(var(--i, 0), 16) * 26ms);
+	transition:
+		border-color 0.2s ease,
+		transform 0.26s cubic-bezier(0.34, 1.52, 0.64, 1),
+		box-shadow 0.22s ease;
 }
 
 .thumb-item:hover {
-	border-color: rgba(91, 142, 240, 0.35);
-	transform: scale(1.04);
-	box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(91, 142, 240, 0.15);
+	border-color: rgba(91, 142, 240, 0.28);
+	transform: scale(1.038) translateY(-2px);
+	box-shadow:
+		0 12px 36px rgba(0, 0, 0, 0.65),
+		0 3px 10px rgba(0, 0, 0, 0.4),
+		0 0 0 1px rgba(91, 142, 240, 0.1);
 	z-index: 1;
 }
 
-.thumb-item.selected {
-	border-color: var(--accent);
-	animation: selected-pulse 2.4s ease-in-out infinite;
-	z-index: 2;
+.thumb-item:active {
+	transform: scale(0.96);
+	transition-duration: 0.09s;
 }
 
 .thumb-item img {
@@ -303,14 +436,36 @@ html.macos .titlebar {
 	display: block;
 }
 
-/* ── wallpaper-applied flash ── */
-@keyframes applied-flash {
-	0%        { opacity: 0;   transform: scale(0.9); }
-	20%       { opacity: 1;   transform: scale(1);   }
-	70%       { opacity: 1;   transform: scale(1);   }
-	100%      { opacity: 0;   transform: scale(1.05); }
+/* ── selected state ── */
+.thumb-item.selected {
+	border-color: var(--accent);
+	animation: selected-glow 2.6s ease-in-out infinite;
+	z-index: 2;
 }
 
+/* checkmark badge */
+.thumb-item.selected::before {
+	content: '';
+	position: absolute;
+	top: 7px;
+	right: 7px;
+	width: 21px;
+	height: 21px;
+	border-radius: 50%;
+	background-color: var(--accent);
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+	background-size: 12px 12px;
+	background-position: center;
+	background-repeat: no-repeat;
+	box-shadow:
+		0 2px 12px rgba(91, 142, 240, 0.6),
+		0 1px 4px rgba(0, 0, 0, 0.45),
+		0 0 0 1.5px rgba(255, 255, 255, 0.1);
+	z-index: 5;
+	animation: badge-pop 0.32s cubic-bezier(0.34, 1.52, 0.64, 1) both;
+}
+
+/* ── applied flash overlay ── */
 .thumb-item.applied::after {
 	content: '✓';
 	position: absolute;
@@ -318,33 +473,43 @@ html.macos .titlebar {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(34, 197, 94, 0.28);
-	backdrop-filter: blur(2px);
-	color: #fff;
+	background:
+		radial-gradient(ellipse at 50% 55%, rgba(34, 197, 94, 0.32) 0%, rgba(22, 163, 74, 0.1) 55%, transparent 80%),
+		rgba(8, 22, 12, 0.15);
+	backdrop-filter: blur(3px) saturate(1.25);
+	color: rgba(167, 243, 208, 0.95);
 	font-size: 2rem;
-	font-weight: 700;
-	border-radius: 6px;
+	font-weight: 900;
+	letter-spacing: -0.02em;
+	text-shadow:
+		0 0 28px rgba(34, 197, 94, 0.85),
+		0 0 10px rgba(34, 197, 94, 0.5),
+		0 2px 6px rgba(0, 0, 0, 0.6);
+	border-radius: calc(var(--radius-sm) - 2px);
 	pointer-events: none;
-	animation: applied-flash 0.75s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+	z-index: 10;
+	animation: applied-flash 0.9s cubic-bezier(0.34, 1.1, 0.64, 1) both;
 }
 
-/* ── overlays — slide in ── */
+/* ── overlays — slide in from edges ── */
 .thumb-name {
 	position: absolute;
 	bottom: 0;
 	left: 0;
 	right: 0;
-	padding: 16px 6px 4px;
-	background: linear-gradient(transparent, rgba(0, 0, 0, 0.78));
-	color: #fff;
-	font-size: 0.65rem;
+	padding: 20px 7px 5px;
+	background: linear-gradient(transparent, rgba(0, 0, 0, 0.82));
+	color: rgba(255, 255, 255, 0.95);
+	font-size: 0.64rem;
+	font-weight: 500;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	opacity: 0;
-	transform: translateY(4px);
-	transition: opacity 0.18s, transform 0.2s cubic-bezier(0.34, 1.2, 0.64, 1);
+	transform: translateY(5px);
+	transition: opacity 0.2s ease, transform 0.22s cubic-bezier(0.34, 1.2, 0.64, 1);
 	pointer-events: none;
+	letter-spacing: 0.01em;
 }
 
 .thumb-item:hover .thumb-name,
@@ -358,17 +523,17 @@ html.macos .titlebar {
 	top: 0;
 	left: 0;
 	right: 0;
-	padding: 4px 6px 18px;
-	background: linear-gradient(rgba(0, 0, 0, 0.65), transparent);
-	color: rgba(255, 255, 255, 0.9);
-	font-size: 0.6rem;
+	padding: 5px 7px 20px;
+	background: linear-gradient(rgba(0, 0, 0, 0.68), transparent);
+	color: rgba(255, 255, 255, 0.88);
+	font-size: 0.59rem;
 	font-variant-numeric: tabular-nums;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	opacity: 0;
-	transform: translateY(-4px);
-	transition: opacity 0.18s, transform 0.2s cubic-bezier(0.34, 1.2, 0.64, 1);
+	transform: translateY(-5px);
+	transition: opacity 0.2s ease, transform 0.22s cubic-bezier(0.34, 1.2, 0.64, 1);
 	pointer-events: none;
 }
 
@@ -379,18 +544,15 @@ html.macos .titlebar {
 }
 
 /* ── status messages ── */
-@keyframes status-in {
-	from { opacity: 0; transform: translateY(6px); }
-	to   { opacity: 1; transform: translateY(0); }
-}
-
 .status {
 	grid-column: 1 / -1;
 	text-align: center;
 	padding: 2rem;
 	color: var(--text-dim);
 	font-size: 0.8rem;
-	animation: status-in 0.3s ease both;
+	animation: status-in 0.32s ease both;
 }
 
-.status.error { color: #e05555; }
+.status.error {
+	color: #e05555;
+}

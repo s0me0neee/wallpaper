@@ -9,7 +9,13 @@ export function flashApplied(path: string): void {
   const item = getItems().find(el => el.querySelector("img")?.title === path);
   if (!item) return;
   item.classList.add("applied");
-  item.addEventListener("animationend", () => item.classList.remove("applied"), { once: true });
+  const cleanup = (e: AnimationEvent) => {
+    if (e.animationName === "applied-flash") {
+      item.classList.remove("applied");
+      item.removeEventListener("animationend", cleanup);
+    }
+  };
+  item.addEventListener("animationend", cleanup);
 }
 
 export function triggerActivate(): void {
@@ -71,6 +77,7 @@ export function appendThumb(entry: ImageEntry, _selectIt = false, sort = "name")
   item.className = "thumb-item";
   item.dataset.index = String(entry.index);
   item.style.order = String(entry.index);
+  item.style.setProperty('--i', String(entry.index));
 
   const filename = entry.path.split("/").pop() ?? "";
 
