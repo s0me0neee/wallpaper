@@ -70,11 +70,10 @@ fn config_path() -> Option<PathBuf> {
     {
         let xdg = dirs::home_dir().map(|h| h.join(".config").join("wallpaper").join("config.toml"));
         if let Some(ref p) = xdg {
-            if p.exists() || p.parent().map(|d| d.exists()).unwrap_or(false) {
+            if p.exists() {
                 return xdg;
             }
         }
-        // ~/.config doesn't exist yet — fall back to ~/Library/Application Support
         dirs::config_dir().map(|d| d.join("wallpaper").join("config.toml"))
     }
 
