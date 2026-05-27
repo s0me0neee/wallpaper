@@ -113,12 +113,14 @@ return {
     skip_set_wallpaper = false,
 
     post_command = function(wallpaper_path)
-        os.execute("notify-send 'Wallpaper changed' " .. wallpaper_path)
-    end,
+        -- if post command fails, use the absolute path instead (/bin/wal).
+		os.execute("wal -q --cols16 foxify-lighten -i " .. wallpaper_path)
+		os.execute("/bin/zsh -c 'kill -USR1 $(/usr/bin/pgrep -x kitty) 2>/dev/null'")
+	end,
 }
 ```
 
-All fields are optional and fall back to built-in defaults. The `post_command` function receives the absolute path of the newly set image and is called after every wallpaper change. Changes made in the GUI (directory, sort order, columns) persist for the session only — edit `conf.lua` directly to make them permanent.
+All fields are optional and fall back to built-in defaults. The `post_command` function receives the absolute path of the newly set image and is called after every wallpaper change. Changes made in the GUI (directory, sort order, columns) persist for the session only — edit `conf.lua` directly to make them permanent (on Mac sometimes the absolute path to the executable is needed).
 
 ## Thumbnail Cache
 
