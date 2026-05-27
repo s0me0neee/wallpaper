@@ -16,7 +16,6 @@
     "core:window:allow-is-fullscreen",
     "core:window:allow-is-maximized",
     "core:event:allow-listen",
-    "notification:default",
     "cli:default"
   ]
 }

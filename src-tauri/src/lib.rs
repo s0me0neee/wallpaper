@@ -6,6 +6,7 @@ mod test;
 pub mod thumbnail;
 mod types;
 
+use mlua::Lua;
 use plugins::mac_rounded_corners;
 use tauri_plugin_cli::CliExt;
 
@@ -18,7 +19,9 @@ fn check_early_flags() {
 
     if has(&["-h", "--help"]) {
         print!(concat!(
-            "wall ", env!("CARGO_PKG_VERSION"), "\n",
+            "wall ",
+            env!("CARGO_PKG_VERSION"),
+            "\n",
             "Floating wallpaper picker and CLI setter\n",
             "\n",
             "USAGE:\n",
@@ -75,7 +78,8 @@ pub fn run() {
     std::thread::spawn(thumbnail::cleanup);
 
     let start = std::time::Instant::now();
-    let cfg = config::load();
+    let lua = Lua::new();
+    let cfg = config::load(&lua);
     let level = verbosity_level();
 
     tauri::Builder::default()
@@ -107,8 +111,8 @@ pub fn run() {
         .plugin(tauri_plugin_cli::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_notification::init())
-        .manage(Mutex::new(cfg))
+.manage(Mutex::new(cfg))
+        .manage(Mutex::new(lua))
         .setup(move |app| {
             // --- CLI mode: `wall <image>` ---
             if let Ok(matches) = app.cli().matches() {
@@ -128,7 +132,11 @@ pub fn run() {
             }
 
             // --- GUI mode ---
-            let cfg = app.state::<Mutex<config::Setting>>().lock().unwrap().clone();
+            let cfg = app
+                .state::<Mutex<config::Setting>>()
+                .lock()
+                .unwrap()
+                .clone();
             if let Some(win) = app.get_webview_window("main") {
                 let _ = win.set_size(tauri::Size::Logical(tauri::LogicalSize {
                     width: cfg.window_width as f64,

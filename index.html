@@ -1,67 +1,83 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <link rel="preload" href="/src/styles.css" as="style" />
-  <link rel="modulepreload" href="/src/main.ts" />
-  <style>html,body{background:transparent}.app{background:#111111}</style>
-  <link rel="stylesheet" href="/src/styles.css" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wallpaper</title>
-  <script type="module" src="/src/main.ts" defer></script>
+	<meta charset="UTF-8" />
+	<link rel="preload" href="/src/styles.css" as="style" />
+	<link rel="modulepreload" href="/src/main.ts" />
+	<style>
+		html,
+		body {
+			background: transparent
+		}
+
+		.app {
+			background: #111111
+		}
+	</style>
+	<link rel="stylesheet" href="/src/styles.css" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Wallpaper</title>
+	<script type="module" src="/src/main.ts" defer></script>
 </head>
+
 <body>
-  <div class="app">
-    <header class="titlebar" data-tauri-drag-region>
-      <div class="title-left" data-tauri-drag-region>
-        <span class="app-name" data-tauri-drag-region>Wallpaper</span>
-      </div>
-      <div class="title-controls">
-        <span id="current-dir" class="dir-label"></span>
-        <select id="sort-by" tabindex="-1">
-          <option value="name">A → Z</option>
-          <option value="name_desc">Z → A</option>
-          <option value="date">Newest</option>
-          <option value="date_old">Oldest</option>
-          <option value="size">Largest</option>
-          <option value="size_asc">Smallest</option>
-        </select>
-        <button id="pick-dir" class="icon-btn" title="Choose folder">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-          </svg>
-        </button>
-        <button id="settings-btn" class="icon-btn" title="Settings">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-        </button>
-        <button id="win-close" class="icon-btn close-btn" title="Close">
-          <svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-            <line x1="1" y1="1" x2="9" y2="9"/>
-            <line x1="9" y1="1" x2="1" y2="9"/>
-          </svg>
-        </button>
-      </div>
-    </header>
+	<div class="app">
+		<header class="titlebar" data-tauri-drag-region>
+			<div class="title-left" data-tauri-drag-region>
+				<span class="app-name" data-tauri-drag-region>Wallpaper</span>
+			</div>
+			<div class="title-controls">
+				<span id="current-dir" class="dir-label"></span>
+				<select id="sort-by" tabindex="-1">
+					<option value="name">A → Z</option>
+					<option value="name_desc">Z → A</option>
+					<option value="date">Newest</option>
+					<option value="date_old">Oldest</option>
+					<option value="size">Largest</option>
+					<option value="size_asc">Smallest</option>
+				</select>
+				<button id="pick-dir" class="icon-btn" title="Choose folder">
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+						stroke-linecap="round" stroke-linejoin="round">
+						<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+					</svg>
+				</button>
+				<button id="settings-btn" class="icon-btn" title="Settings">
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+						stroke-linecap="round" stroke-linejoin="round">
+						<circle cx="12" cy="12" r="3" />
+						<path
+							d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+					</svg>
+				</button>
+				<button id="win-close" class="icon-btn close-btn" title="Close">
+					<svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" stroke-width="1.5"
+						stroke-linecap="round">
+						<line x1="1" y1="1" x2="9" y2="9" />
+						<line x1="9" y1="1" x2="1" y2="9" />
+					</svg>
+				</button>
+			</div>
+		</header>
 
-    <div id="settings-panel" class="settings-panel hidden">
-      <label class="setting-row">
-        <span>Width</span>
-        <input id="win-width" type="number" min="400" max="2400" step="10" />
-      </label>
-      <label class="setting-row">
-        <span>Height</span>
-        <input id="win-height" type="number" min="300" max="1600" step="10" />
-      </label>
-      <label class="setting-row">
-        <span>Post-cmd only</span>
-        <input id="skip-set-wallpaper" type="checkbox" />
-      </label>
-    </div>
+		<div id="settings-panel" class="settings-panel hidden">
+			<label class="setting-row">
+				<span>Width</span>
+				<input id="win-width" type="number" min="400" max="2400" step="10" />
+			</label>
+			<label class="setting-row">
+				<span>Height</span>
+				<input id="win-height" type="number" min="300" max="1600" step="10" />
+			</label>
+			<label class="setting-row">
+				<span>Post-cmd only</span>
+				<input id="skip-set-wallpaper" type="checkbox" />
+			</label>
+		</div>
 
-    <div id="grid" class="grid"></div>
-  </div>
+		<div id="grid" class="grid"></div>
+	</div>
 </body>
+
 </html>

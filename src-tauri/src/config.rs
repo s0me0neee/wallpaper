@@ -1,24 +1,17 @@
 use crate::types;
+use mlua::{Lua, Table};
+use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
 use thiserror::Error;
 
-#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Setting {
-    #[serde(default)]
     pub image_dir: Option<PathBuf>,
-    #[serde(default)]
     pub order: types::SortBy,
-    #[serde(default = "default_cols")]
     pub number_of_cols: u16,
-    #[serde(default)]
     pub subdir: bool,
-    #[serde(default = "default_win_w")]
     pub window_width: u32,
-    #[serde(default = "default_win_h")]
     pub window_height: u32,
-    #[serde(default)]
-    pub post_command: types::PostCommand,
-    #[serde(default)]
     pub skip_set_wallpaper: bool,
 }
 
@@ -41,7 +34,6 @@ impl Default for Setting {
             subdir: false,
             window_width: default_win_w(),
             window_height: default_win_h(),
-            post_command: types::PostCommand::default(),
             skip_set_wallpaper: false,
         }
     }
@@ -57,91 +49,111 @@ pub enum ConfigError {
 
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
-
-    #[error("Serialization error: {0}")]
-    TomlSerError(#[from] toml::ser::Error),
-
-    #[error("Deserialization error: {0}")]
-    TomlDeError(#[from] toml::de::Error),
 }
 
 fn config_path() -> Option<PathBuf> {
+    let file = "conf.lua";
     #[cfg(target_os = "macos")]
     {
-        let xdg = dirs::home_dir().map(|h| h.join(".config").join("wallpaper").join("config.toml"));
+        let xdg = dirs::home_dir().map(|h| h.join(".config").join("wallpaper").join(file));
         if let Some(ref p) = xdg {
             if p.exists() {
                 return xdg;
             }
         }
-        dirs::config_dir().map(|d| d.join("wallpaper").join("config.toml"))
+        dirs::config_dir().map(|d| d.join("wallpaper").join(file))
     }
 
     #[cfg(not(target_os = "macos"))]
     {
-        dirs::config_dir().map(|d| d.join("wallpaper").join("config.toml"))
+        dirs::config_dir().map(|d| d.join("wallpaper").join(file))
     }
 }
 
-fn ensure_file(path: &std::path::Path) -> Result<(), ConfigError> {
+fn read(path: &std::path::Path) -> Result<String, ConfigError> {
     if path.is_dir() {
         return Err(ConfigError::NotAFile(path.to_path_buf()));
     }
     if !path.exists() {
         return Err(ConfigError::NotFound(path.to_path_buf()));
     }
-    Ok(())
+    Ok(fs::read_to_string(path)?)
 }
 
-pub fn load() -> Setting {
+/// Load config from `conf.lua`. If a `post_command` function is defined in the
+/// table, it is stored in the Lua globals as `_wall_post_command` for later use
+/// by `set_wallpaper`. All other fields fall back to defaults if absent.
+pub fn load(lua: &Lua) -> Setting {
     let Some(path) = config_path() else {
         log::warn!("Could not determine config directory, using defaults");
         return Setting::default();
     };
 
-    match read(&path) {
-        Ok(s) => {
-            log::info!("Config loaded from {}", path.display());
-            s
-        }
+    let content = match read(&path) {
+        Ok(s) => s,
         Err(ConfigError::NotFound(_)) => {
-            log::info!("No config file yet, using defaults");
-            Setting::default()
+            log::info!("No config file, using defaults");
+            return Setting::default();
         }
         Err(e) => {
-            log::warn!("Failed to load config ({e}), using defaults");
-            Setting::default()
+            log::warn!("Failed to read config ({e}), using defaults");
+            return Setting::default();
         }
-    }
-}
+    };
 
-fn read(path: &PathBuf) -> Result<Setting, ConfigError> {
-    ensure_file(path)?;
-    let content = fs::read_to_string(path)?;
-    Ok(toml::from_str(&content)?)
-}
+    let table: Table = match lua.load(&content).eval() {
+        Ok(t) => t,
+        Err(e) => {
+            log::warn!("Failed to parse Lua config ({e}), using defaults");
+            return Setting::default();
+        }
+    };
 
-pub fn save(setting: &Setting) -> Result<(), ConfigError> {
-    let path = config_path().ok_or_else(|| {
-        ConfigError::IoError(std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            "could not determine config directory",
-        ))
-    })?;
+    log::info!("Config loaded from {}", path.display());
 
-    if path.is_dir() {
-        return Err(ConfigError::NotAFile(path));
-    }
-
-    if let Some(parent) = path.parent() {
-        if !parent.exists() {
-            log::debug!("Creating config dir: {}", parent.display());
-            fs::create_dir_all(parent)?;
+    if let Ok(Some(func)) = table.get::<Option<mlua::Function>>("post_command") {
+        match lua.globals().set("_wall_post_command", func) {
+            Ok(_) => log::info!("post_command function registered"),
+            Err(e) => log::warn!("Failed to register post_command: {e}"),
         }
     }
 
-    let toml = toml::to_string_pretty(setting)?;
-    fs::write(&path, toml)?;
-    log::info!("Config saved to {}", path.display());
-    Ok(())
+    let def = Setting::default();
+
+    let order = table
+        .get::<Option<String>>("order")
+        .ok()
+        .flatten()
+        .and_then(|s| match s.as_str() {
+            "name" => Some(types::SortBy::Name),
+            "name_desc" => Some(types::SortBy::NameDesc),
+            "date" => Some(types::SortBy::Date),
+            "date_old" => Some(types::SortBy::DateOld),
+            "size" => Some(types::SortBy::Size),
+            "size_asc" => Some(types::SortBy::SizeAsc),
+            _ => None,
+        })
+        .unwrap_or(def.order);
+
+    Setting {
+        image_dir: table
+            .get::<Option<String>>("image_dir")
+            .ok()
+            .flatten()
+            .map(PathBuf::from),
+        order,
+        number_of_cols: table
+            .get::<u16>("number_of_cols")
+            .unwrap_or(def.number_of_cols),
+        subdir: table.get::<bool>("subdir").unwrap_or(def.subdir),
+        window_width: table
+            .get::<u32>("window_width")
+            .unwrap_or(def.window_width),
+        window_height: table
+            .get::<u32>("window_height")
+            .unwrap_or(def.window_height),
+        skip_set_wallpaper: table
+            .get::<bool>("skip_set_wallpaper")
+            .unwrap_or(def.skip_set_wallpaper),
+    }
 }

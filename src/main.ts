@@ -10,8 +10,7 @@ import type { AppConfig } from "./types";
 
 let appConfig: AppConfig = {
   image_dir: null, order: "name", number_of_cols: 4, subdir: false,
-  window_width: 720, window_height: 520, post_command: { cmds: [] },
-  skip_set_wallpaper: false,
+  window_width: 720, window_height: 520, skip_set_wallpaper: false,
 };
 
 function saveConfig(): void {

@@ -21,13 +21,8 @@ pub enum SortBy {
     #[default]
     Name,
     NameDesc,
-    Date,    // newest first
-    DateOld, // oldest first
-    Size,    // largest first
-    SizeAsc, // smallest first
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
-pub struct PostCommand {
-    pub cmds: Vec<String>,
+    Date,
+    DateOld,
+    Size,
+    SizeAsc,
 }
