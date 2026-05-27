@@ -5075,7 +5075,7 @@ dependencies = [
 
 [[package]]
 name = "wallpaper"
-version = "1.0.3"
+version = "1.0.5"
 dependencies = [
  "base64 0.22.1",
  "cocoa",

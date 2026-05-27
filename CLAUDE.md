@@ -39,11 +39,11 @@ Standard Tauri v2 hybrid: Rust backend streams data to a TypeScript frontend via
 | File           | Responsibility                                                                                                                                                                                                                                                     |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `lib.rs`       | App entry point — `check_early_flags()` handles `--help`/`--version` before Tauri starts; pre-parses verbosity flags, loads config, starts cleanup thread, registers plugins and commands; detects CLI mode in `setup` and exits early if an image path was passed |
-| `config.rs`    | Load/save `~/.config/wallpaper/config.toml` (macOS falls back to `~/Library/Application Support` if `~/.config` doesn't exist)                                                                                                                                     |
-| `commands.rs`  | Tauri command handlers exposed to the frontend; `set_wallpaper` also runs post-commands and `${{notify}}` directives                                                                                                                                               |
+| `config.rs`    | Load `~/.config/wallpaper/conf.lua` via mlua; extracts `Setting` fields from the returned table; registers `post_command` function in Lua globals; macOS falls back to `~/Library/Application Support` if `~/.config` doesn't exist                              |
+| `commands.rs`  | Tauri command handlers exposed to the frontend; `set_wallpaper` calls the Lua `_wall_post_command` global (if set) after applying the wallpaper                                                                                                                    |
 | `scanner.rs`   | Reads a directory, filters image files, sorts by name/date/size                                                                                                                                                                                                    |
 | `thumbnail.rs` | Generate JPEG thumbnails (Lanczos3, 1000×600, q92); disk cache in `~/.cache/wallpaper/thumbnails/`; cache cleanup on startup                                                                                                                                       |
-| `types.rs`     | Shared serde types: `ImageEntry`, `LoadDone`, `SortBy`, `PostCommand`                                                                                                                                                                                              |
+| `types.rs`     | Shared serde types: `ImageEntry`, `LoadDone`, `SortBy`                                                                                                                                                                                                             |
 | `test.rs`      | `TEST`/`BENCH` env var handling for dev                                                                                                                                                                                                                            |
 
 **CLI mode** — `check_early_flags()` in `lib.rs` handles `-h`/`--help` and `-V`/`--version` by printing and exiting before the Tauri builder runs — no window flash. `verbosity_level()` then counts `-v`/`--verbose` occurrences. In the `setup` callback, `app.cli().matches()` is called; if an `image` arg is present, `wp::set_from_path` is called and the process exits — the window never appears.
@@ -54,7 +54,7 @@ On macOS the app bundle binary is at `/Applications/wall.app/Contents/MacOS/wall
 
 **Parallelism** — thumbnail generation uses a capped rayon thread pool (`clamp(2, 6)` threads). Rayon is used instead of tokio because decoding is CPU-bound, not I/O-bound.
 
-**Post-commands** — after setting a wallpaper, `commands::set_wallpaper` spawns a thread that runs each entry in `post_command.cmds`. `${{wallpaper}}` is substituted with the image path. `${{notify 'message'}}` sends a native notification via `tauri-plugin-notification` (no shell spawned). Other commands run via `duct` with `$SHELL -l -i -c` on Unix — login+interactive so both `~/.zprofile` and `~/.zshrc` are sourced, making user-installed tools (pyenv, pip, etc.) available.
+**Post-commands** — if `post_command` is defined as a function in `conf.lua`, `commands::set_wallpaper` calls it via mlua after setting the wallpaper, passing the absolute image path as the sole argument. The function runs synchronously in the Lua VM and can call `os.execute` for shell commands. The Lua runtime (`mlua::Lua`) is shared across calls via a `Mutex<Lua>` Tauri state.
 
 ### TypeScript — `src/`
 
@@ -86,19 +86,25 @@ The CLI schema is defined in `tauri.conf.json` under `plugins.cli`:
 
 ### Config
 
-Persisted at `~/.config/wallpaper/config.toml` (macOS: XDG path preferred, `~/Library/Application Support` fallback):
+Loaded from `~/.config/wallpaper/conf.lua` (macOS: XDG path preferred, `~/Library/Application Support` fallback). The file must return a Lua table:
 
-```toml
-image_dir = "/home/user/Pictures/wallpaper"
-order = "name"
-number_of_cols = 4
-subdir = false
+```lua
+return {
+    image_dir      = "/home/user/Pictures/wallpaper",
+    order          = "name",   -- name | name_desc | date | date_old | size | size_asc
+    number_of_cols = 4,
+    subdir         = false,
+    window_width   = 720,
+    window_height  = 520,
+    skip_set_wallpaper = false,
 
-[post_command]
-cmds = []
+    post_command = function(wallpaper_path)
+        os.execute("notify-send 'Wallpaper changed' " .. wallpaper_path)
+    end,
+}
 ```
 
-Auto-saved whenever the user changes directory, sort order, or column count.
+All fields are optional and fall back to defaults. `save_config` (called from the frontend when the user changes directory, sort order, or column count) updates the **in-memory** state only — the Lua file is user-managed and never written back by the app.
 
 ### Key Dependencies (Rust)
 
@@ -109,14 +115,13 @@ Auto-saved whenever the user changes directory, sort order, or column count.
 | `base64 0.22`               | Encode thumbnail bytes as data URLs for IPC                          |
 | `dirs`                      | Cross-platform config/cache/pictures directory paths                 |
 | `thiserror`                 | Error types in `config.rs`                                           |
-| `duct`                      | Shell command execution for post-commands                            |
+| `mlua 0.11` (lua54+vendored) | Embedded Lua 5.4 runtime; loads `conf.lua` and calls `post_command` |
 | `wp` (`wallpaper` crate v3) | Set the desktop wallpaper                                            |
 | `tauri-plugin-cli`          | CLI argument parsing; schema in `tauri.conf.json`                    |
 | `tauri-plugin-dialog`       | Native directory picker                                              |
 | `tauri-plugin-log`          | Coloured, timestamped terminal logging                               |
-| `tauri-plugin-notification` | Native OS notifications for `${{notify}}` post-command directive     |
 | `criterion` (dev)           | Benchmark harness for `benches/thumbnail_bench.rs`                   |
 
 ### Window
 
-720 × 520, borderless (`decorations: false`), transparent, always on top. Custom titlebar with `data-tauri-drag-region` for dragging. Capabilities: `core:default`, `opener:default`, `dialog:default`, `core:window:allow-close`, `core:window:allow-minimize`, `notification:default`, `cli:default`.
+Default 720 × 520 (configurable via `window_width`/`window_height` in `conf.lua`), borderless (`decorations: false`), transparent, always on top. Custom titlebar with `data-tauri-drag-region` for dragging. Capabilities: `core:default`, `opener:default`, `dialog:default`, `core:window:allow-close`, `core:window:allow-minimize`, `core:window:allow-set-size`, `core:window:allow-set-focus`, `core:window:allow-show`, `core:window:allow-start-dragging`, `core:window:allow-is-fullscreen`, `core:window:allow-is-maximized`, `core:event:allow-listen`, `cli:default`.

@@ -9,8 +9,8 @@ A lightweight floating wallpaper picker built with [Tauri v2](https://tauri.app)
 - Sort by name, date, or file size (ascending/descending)
 - Ctrl +/- to zoom the grid (2–8 columns)
 - hjkl / arrow key navigation
-- Config auto-saved — remembers last directory, sort order, and column count
-- Post-command hooks — run shell commands (or send a native notification) after every wallpaper change
+- Lua config (`conf.lua`) — remembers last directory, sort order, and column count
+- Post-command hook — define a Lua function in `conf.lua` that runs after every wallpaper change
 - CLI mode — set a wallpaper from the terminal without opening the GUI
 - Esc or ✕ to close
 
@@ -100,22 +100,25 @@ Runs a two-phase benchmark: a one-shot stats report (mean, p25/p50/p75, img/s fo
 
 ## Config
 
-Saved automatically to `~/.config/wallpaper/config.toml` (on macOS, falls back to `~/Library/Application Support/wallpaper/config.toml` if `~/.config` doesn't exist):
+Loaded from `~/.config/wallpaper/conf.lua` (macOS: XDG path preferred, falls back to `~/Library/Application Support/wallpaper/conf.lua`). The file must return a Lua table:
 
-```toml
-image_dir = "/home/user/Pictures/wallpaper"
-order = "name"
-number_of_cols = 4
-subdir = false
+```lua
+return {
+    image_dir      = "/home/user/Pictures/wallpaper",
+    order          = "name",   -- name | name_desc | date | date_old | size | size_asc
+    number_of_cols = 4,
+    subdir         = false,
+    window_width   = 720,
+    window_height  = 520,
+    skip_set_wallpaper = false,
 
-[post_command]
-cmds = [
-  "notify-send 'Wallpaper changed' '${{wallpaper}}'",
-  "${{notify 'Wallpaper changed'}}",
-]
+    post_command = function(wallpaper_path)
+        os.execute("notify-send 'Wallpaper changed' " .. wallpaper_path)
+    end,
+}
 ```
 
-`${{wallpaper}}` is replaced with the absolute path of the newly set image. `${{notify 'message'}}` sends a native OS notification without spawning a shell.
+All fields are optional and fall back to built-in defaults. The `post_command` function receives the absolute path of the newly set image and is called after every wallpaper change. Changes made in the GUI (directory, sort order, columns) persist for the session only — edit `conf.lua` directly to make them permanent.
 
 ## Thumbnail Cache
 
@@ -123,6 +126,6 @@ Thumbnails are cached in `~/.cache/wallpaper/thumbnails/`. The cache is self-man
 
 ## Tech Stack
 
-- **Backend** — Rust, Tauri v2, rayon, image crate (Lanczos3 resize), duct
+- **Backend** — Rust, Tauri v2, rayon, image crate (Lanczos3 resize), mlua (Lua 5.4)
 - **Frontend** — TypeScript, Vite
-- **Plugins** — tauri-plugin-cli, tauri-plugin-dialog, tauri-plugin-log, tauri-plugin-notification, tauri-plugin-opener
+- **Plugins** — tauri-plugin-cli, tauri-plugin-dialog, tauri-plugin-log, tauri-plugin-opener
