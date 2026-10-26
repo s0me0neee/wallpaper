@@ -1,5 +1,6 @@
 mod commands;
 mod config;
+mod hook;
 mod plugins;
 mod scanner;
 mod test;
@@ -76,9 +77,14 @@ pub fn run() {
     check_early_flags();
     test::bench_if_requested();
     std::thread::spawn(thumbnail::cleanup);
+    // Warm up now so the first post_command doesn't wait on the login shell.
+    std::thread::spawn(hook::shell_env);
 
     let start = std::time::Instant::now();
     let lua = Lua::new();
+    if let Err(e) = hook::register(&lua) {
+        eprintln!("failed to register Lua `wall` table: {e}");
+    }
     let cfg = config::load(&lua);
     let level = verbosity_level();
 

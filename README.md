@@ -112,15 +112,23 @@ return {
     window_height  = 520,
     skip_set_wallpaper = false,
 
-    post_command = function(wallpaper_path)
-        -- if post command fails, use the absolute path instead (/bin/wal).
-		os.execute("wal -q --cols16 foxify-lighten -i " .. wallpaper_path)
-		os.execute("/bin/zsh -c 'kill -USR1 $(/usr/bin/pgrep -x kitty) 2>/dev/null'")
-	end,
+    post_command = function(path)
+        wall.run({ "wal", "-q", "-n", "-s", "--cols16", "foxify-lighten", "-i", path })
+        wall.run({ "sketchybar", "--reload" })
+        pcall(wall.run, { "pkill", "-USR1", "-a", "-x", "kitty" }) -- ok if kitty isn't running
+    end,
 }
 ```
 
-All fields are optional and fall back to built-in defaults. The `post_command` function receives the absolute path of the newly set image and is called after every wallpaper change. Changes made in the GUI (directory, sort order, columns) persist for the session only — edit `conf.lua` directly to make them permanent (on Mac sometimes the absolute path to the executable is needed).
+All fields are optional and fall back to built-in defaults. Changes made in the GUI (directory, sort order, columns) persist for the session only — edit `conf.lua` directly to make them permanent.
+
+### Post-command hook
+
+`post_command` receives the absolute path of the newly set image and runs in the background after every wallpaper change, so a slow hook never blocks the UI. If you pick several wallpapers quickly, hooks for the older picks that haven't started yet are skipped.
+
+`wall.run({ program, args... })` runs a command directly, without a shell, so paths need no quoting. It returns stdout, and raises an error if the program is missing, exits non-zero, or runs longer than 30 s. An error stops the hook and is logged with the exit status and stderr (macOS: `~/Library/Logs/com.maot27.wallpaper/`). Wrap a call in `pcall` to tolerate its failure.
+
+Commands get your login shell's `PATH` and locale even when the app is launched from Finder or the Dock, so tools in `~/.local/bin` or `/opt/homebrew/bin` work without absolute paths. `os.execute` is still available if you need a shell.
 
 ## Thumbnail Cache
 

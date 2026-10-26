@@ -40,7 +40,8 @@ Standard Tauri v2 hybrid: Rust backend streams data to a TypeScript frontend via
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `lib.rs`       | App entry point — `check_early_flags()` handles `--help`/`--version` before Tauri starts; pre-parses verbosity flags, loads config, starts cleanup thread, registers plugins and commands; detects CLI mode in `setup` and exits early if an image path was passed |
 | `config.rs`    | Load `~/.config/wallpaper/conf.lua` via mlua; extracts `Setting` fields from the returned table; registers `post_command` function in Lua globals; macOS falls back to `~/Library/Application Support` if `~/.config` doesn't exist                              |
-| `commands.rs`  | Tauri command handlers exposed to the frontend; `set_wallpaper` calls the Lua `_wall_post_command` global (if set) after applying the wallpaper                                                                                                                    |
+| `commands.rs`  | Tauri command handlers exposed to the frontend; `set_wallpaper` applies the wallpaper then hands off to `hook::spawn_post_command`                                                                                                                                 |
+| `hook.rs`      | Post-command runtime: registers the Lua `wall.run` helper, resolves the login shell's `PATH`/locale for Finder launches, runs `_wall_post_command` on a background thread                                                                                          |
 | `scanner.rs`   | Reads a directory, filters image files, sorts by name/date/size                                                                                                                                                                                                    |
 | `thumbnail.rs` | Generate JPEG thumbnails (Lanczos3, 1000×600, q92); disk cache in `~/.cache/wallpaper/thumbnails/`; cache cleanup on startup                                                                                                                                       |
 | `types.rs`     | Shared serde types: `ImageEntry`, `LoadDone`, `SortBy`                                                                                                                                                                                                             |
@@ -54,7 +55,9 @@ On macOS the app bundle binary is at `/Applications/wall.app/Contents/MacOS/wall
 
 **Parallelism** — thumbnail generation uses a capped rayon thread pool (`clamp(2, 6)` threads). Rayon is used instead of tokio because decoding is CPU-bound, not I/O-bound.
 
-**Post-commands** — if `post_command` is defined as a function in `conf.lua`, `commands::set_wallpaper` calls it via mlua after setting the wallpaper, passing the absolute image path as the sole argument. The function runs synchronously in the Lua VM and can call `os.execute` for shell commands. The Lua runtime (`mlua::Lua`) is shared across calls via a `Mutex<Lua>` Tauri state.
+**Post-commands** — if `post_command` is defined as a function in `conf.lua`, `commands::set_wallpaper` calls `hook::spawn_post_command`, which runs it on a background thread with the absolute image path as the sole argument. The Lua runtime (`mlua::Lua`) is shared via a `Mutex<Lua>` Tauri state, so hooks run one at a time; a queued hook is skipped if a newer pick arrived (`LATEST` counter). Lua errors are logged at error level.
+
+`hook::register` adds a global `wall` table before `conf.lua` loads. `wall.run({prog, args...})` spawns via `duct` without a shell, with null stdin, a 30 s timeout, and the env from `hook::shell_env()`. It returns stdout, or raises a Lua error naming the program with its exit status and stderr. `shell_env()` is resolved once (warmed up at startup): when stdin isn't a terminal (Finder/Dock launch), it reads `PATH`/`LANG`/`LC_*` from `$SHELL -ilc` and falls back to `LANG=en_US.UTF-8` if no locale is set.
 
 ### TypeScript — `src/`
 
@@ -98,8 +101,8 @@ return {
     window_height  = 520,
     skip_set_wallpaper = false,
 
-    post_command = function(wallpaper_path)
-        os.execute("notify-send 'Wallpaper changed' " .. wallpaper_path)
+    post_command = function(path)
+        wall.run({ "wal", "-q", "-n", "-s", "-i", path })
     end,
 }
 ```
@@ -112,6 +115,7 @@ All fields are optional and fall back to defaults. `save_config` (called from th
 | --------------------------- | -------------------------------------------------------------------- |
 | `image 0.25`                | Image decode + Lanczos3 resize (jpeg/png/webp/gif/bmp features only) |
 | `rayon`                     | CPU-parallel thumbnail generation                                    |
+| `duct`                      | Spawn post-command programs with captured output and a timeout       |
 | `base64 0.22`               | Encode thumbnail bytes as data URLs for IPC                          |
 | `dirs`                      | Cross-platform config/cache/pictures directory paths                 |
 | `thiserror`                 | Error types in `config.rs`                                           |

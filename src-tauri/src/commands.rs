@@ -1,5 +1,5 @@
 use crate::{
-    config, scanner, test, thumbnail,
+    config, hook, scanner, test, thumbnail,
     types::{ImageEntry, LoadDone, SortBy},
 };
 use base64::{engine::general_purpose::STANDARD, Engine};
@@ -158,13 +158,11 @@ pub fn save_config(
     Ok(())
 }
 
-const POSTCMD: &str = "[postcmd]";
-
 #[tauri::command]
 pub fn set_wallpaper(
     path: String,
+    app: tauri::AppHandle,
     state: State<Mutex<config::Setting>>,
-    lua_state: State<Mutex<mlua::Lua>>,
 ) -> Result<(), String> {
     let skip = state.lock().unwrap().skip_set_wallpaper;
 
@@ -174,20 +172,6 @@ pub fn set_wallpaper(
         wp::set_from_path(&path).map_err(|e| e.to_string())?;
     }
 
-    let lua = lua_state.lock().unwrap();
-    match lua
-        .globals()
-        .get::<Option<mlua::Function>>("_wall_post_command")
-    {
-        Ok(Some(func)) => {
-            log::info!("{POSTCMD} calling Lua post_command(\"{path}\")");
-            if let Err(e) = func.call::<()>(path.as_str()) {
-                log::warn!("{POSTCMD} error: {e}");
-            }
-        }
-        Ok(None) => {}
-        Err(e) => log::warn!("{POSTCMD} error getting function: {e}"),
-    }
-
+    hook::spawn_post_command(app, path);
     Ok(())
 }
